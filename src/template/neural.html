@@ -2,13 +2,15 @@
 <meta charset="utf-8">
 <style>
     .links line {
-        stroke: #999;
-        stroke-opacity: 0.6;
+        stroke: #c1c1c1;
+        stroke-width: 2px;
+        pointer-events: all;
     }
 
     .nodes circle {
-        stroke: #fff;
-        stroke-width: 1.5px;
+        pointer-events: all;
+        stroke: #777;
+        stroke-width: 1px;
     }
 
     text {
@@ -63,6 +65,10 @@
         .selectAll("g")
         .data(graph.nodes)
         .enter().append("g")
+        .call(d3.drag()
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            .on("end", dragended));
 
     var circles = node.append("circle")
         .attr("r", 5)
@@ -87,10 +93,6 @@
                 .style("top", (d3.event.pageY + 10) + "px");
         })
         .on('dblclick', releasenode)
-        .call(d3.drag()
-            .on("start", dragstarted)
-            .on("drag", dragged)
-            .on("end", dragended));
 
     // show node labels on node
     var lables = node.append("text")
@@ -110,15 +112,13 @@
 
     function ticked() {
         link
-            .attr("x1", function (d) { return d.source.x; })
-            .attr("y1", function (d) { return d.source.y; })
-            .attr("x2", function (d) { return d.target.x; })
-            .attr("y2", function (d) { return d.target.y; });
+            .attr('x1', d => d.source.x)
+            .attr('y1', d => d.source.y)
+            .attr('x2', d => d.target.x)
+            .attr('y2', d => d.target.y);
 
         node
-            .attr("transform", function (d) {
-                return "translate(" + d.x + "," + d.y + ")";
-            })
+            .attr('transform', d => `translate(${d.x},${d.y})`);
     }
 
     function dragstarted(d) {
