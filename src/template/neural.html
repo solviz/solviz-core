@@ -86,6 +86,7 @@
             tooltip.style("left", (d3.event.pageX) + "px")
                 .style("top", (d3.event.pageY + 10) + "px");
         })
+        .on('dblclick', releasenode)
         .call(d3.drag()
             .on("start", dragstarted)
             .on("drag", dragged)
@@ -133,6 +134,10 @@
 
     function dragended(d) {
         if (!d3.event.active) simulation.alphaTarget(0);
+        //d.fx = null;
+        //d.fy = null;
+    }
+    function releasenode(d) {
         d.fx = null;
         d.fy = null;
     }
