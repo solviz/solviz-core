@@ -66,10 +66,19 @@
             .attr("text-anchor", function (d) { return d.x < 180 ? "start" : "end"; })
             .text(function (d) { return d.data.key; })
             .on("mouseover", function (d) {
-                d3.select(this).style("fill", "red");
+                //first make all the nodes/links black(reset).
+                d3.select(this).style("fill", "blue");
+                // d3.selectAll(".link").style("stroke", "red");
+                //iterate over the imports which is the targets of the node(on which it is hovered) and color them.
+                d.data.imports.forEach(function (name) {
+                    colorNode(name);
+                    //color the link for a given source and target name.
+                    colorLink(d.data.name, name);
+                });
             })
             .on("mouseout", function (d) {
-                d3.select(this).style("fill", "black");
+                d3.selectAll(".node").style("fill", "black");
+                d3.selectAll(".link").style("stroke", "steelblue");
             });
 
         // Lazily construct the package hierarchy from class names.
@@ -114,6 +123,27 @@
             });
 
             return imports;
+        }
+
+        function colorNode(name) {
+            //iterate through all the dom and get the DOM which has the data
+            d3.selectAll(".node").each(function (d, i) {
+                if (d.data.name === name) {
+                    d3.select(this).style("fill", "blue");
+                }
+            });
+        }
+
+        function colorLink(src, tgt) {
+            //iterate through all the links for src and target.
+            var link = d3.selectAll(".link").each(function (d, i) {
+                var total = d.length;
+                for (let x = 0; x < total; x++) {
+                    if (d[x].data.name === src && d[x].data.imports !== undefined && d[x].data.imports.includes(tgt)) {
+                        d3.select(this).style("stroke", "red");
+                    }
+                }
+            });
         }
 
     </script>
