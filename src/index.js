@@ -38,3 +38,43 @@ exports.generateNeural = (solidityFile) => {
     // copy styles
     fs.copyFileSync(`${currentFolder}src/template/neural.html`, `${process.cwd()}/docs/neural.html`);
 }
+
+exports.generateEdgeBundling = (solidityFile) => {
+    // get current path folder
+    const currentFolder = path.join(__dirname, '../');
+    // read file
+    const input = fs.readFileSync(solidityFile).toString();
+    // parse it using solidity-parser-antlr
+    const ast = parser.parse(input);
+    // start data 
+    const graphData = [];
+    // navigate though all subnodes
+    ast.children[3].subNodes.forEach((fDef) => {
+        // verify if they are functions
+        if (fDef.type === 'FunctionDefinition') {
+            // call methods
+            const callMethods = [];
+            // navigate through everything happening inside that function
+            fDef.body.statements.forEach((fLink) => {
+                // verify if it's an expression, a function call and not a require
+                if (fLink.type === 'ExpressionStatement' &&
+                    fLink.expression.type === 'FunctionCall' &&
+                    fLink.expression.expression.name !== 'require') {
+                    // and if so, add to a list
+                    callMethods.push(fLink.expression.expression.name);
+                }
+            });
+            graphData.push({
+                name: fDef.name,
+                size: 3938,
+                imports: callMethods
+            });
+        }
+    });
+    // turn it into a string to save in a file
+    const fileContent = 'var classes=' + JSON.stringify(graphData);
+    // write it to a file
+    fs.writeFileSync(`${process.cwd()}/docs/data/edge.js`, fileContent);
+    // copy styles
+    fs.copyFileSync(`${currentFolder}src/template/edgebundling.html`, `${process.cwd()}/docs/edgebundling.html`);
+}
