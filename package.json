@@ -1,0 +1,28 @@
+{
+    "name": "solvis",
+    "version": "0.1.0",
+    "description": "A solidity contract visualizer using d3.js",
+    "main": "index.js",
+    "bin": {
+        "solvis": "cli.js"
+    },
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "demo": "./bin/cli.js test/contracts/ERC20.sol"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/obernardovieira/solvis.git"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/obernardovieira/solvis/issues"
+    },
+    "homepage": "https://github.com/obernardovieira/solvis#readme",
+    "dependencies": {
+        "meow": "^5.0.0",
+        "solidity-parser-antlr": "^0.4.2"
+    }
+}
