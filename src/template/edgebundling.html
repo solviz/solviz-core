@@ -138,10 +138,8 @@
             //iterate through all the links for src and target.
             var link = d3.selectAll(".link").each(function (d, i) {
                 var total = d.length;
-                for (let x = 0; x < total; x++) {
-                    if (d[x].data.name === src && d[x].data.imports !== undefined && d[x].data.imports.includes(tgt)) {
-                        d3.select(this).style("stroke", "red");
-                    }
+                if (d[0].data.name === src) {
+                    d3.select(this).style("stroke", "red");
                 }
             });
         }
