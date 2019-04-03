@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 
 function processData(solidityFile, graphData) {
+    let iGraphData = graphData;
     // read file
     const input = fs.readFileSync(solidityFile).toString();
     // parse it using solidity-parser-antlr
@@ -11,7 +12,7 @@ function processData(solidityFile, graphData) {
     parser.visit(ast, {
         ImportDirective: (node) => {
             const nodePath = path.join(path.join(solidityFile, '../'), node.path);
-            graphData = processData(nodePath, graphData);
+            iGraphData = processData(nodePath, iGraphData);
         },
         ContractDefinition: (node) => {
             if (node.kind !== 'interface') {
@@ -19,40 +20,40 @@ function processData(solidityFile, graphData) {
                     // verify if they are functions
                     if (fDef.type === 'FunctionDefinition') {
                         // and if so, add to a list
-                        graphData.nodes.push({ id: fDef.name, group: node.name });
+                        iGraphData.nodes.push({ id: fDef.name, group: node.name });
                         // navigate through everything happening inside that function
                         fDef.body.statements.forEach((fLink) => {
                             // verify if it's an expression, a function call and not a require
-                            if (fLink.type === 'ExpressionStatement' &&
-                                fLink.expression.type === 'FunctionCall' &&
-                                fLink.expression.expression.name !== 'require') {
+                            if (fLink.type === 'ExpressionStatement'
+                                && fLink.expression.type === 'FunctionCall'
+                                && fLink.expression.expression.name !== 'require') {
                                 // and if so, add to a list
-                                graphData.links.push({
+                                iGraphData.links.push({
                                     source: fDef.name,
                                     target: fLink.expression.expression.name,
-                                    value: 1
+                                    value: 1,
                                 });
                             }
                         });
                     }
                 });
             }
-        }
+        },
     });
-    return graphData;
+    return iGraphData;
 }
 
 exports.generateNeural = (solidityFile) => {
     // get current path folder
     const currentFolder = path.join(__dirname, '../');
-    // start data 
+    // start data
     let graphData = { nodes: [], links: [] };
     // processa it
     graphData = processData(solidityFile, graphData);
     // turn it into a string to save in a file
-    const fileContent = 'var graph=' + JSON.stringify(graphData);
+    const fileContent = `var graph=${JSON.stringify(graphData)}`;
     // write it to a file
     fs.writeFileSync(`${process.cwd()}/docs/data/neural.js`, fileContent);
     // copy styles
     fs.copyFileSync(`${currentFolder}src/template/neural.html`, `${process.cwd()}/docs/neural.html`);
-}
+};

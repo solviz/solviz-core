@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 
 function processData(solidityFile, graphData) {
+    let iGraphData = graphData;
     // read file
     const input = fs.readFileSync(solidityFile).toString();
     // parse it using solidity-parser-antlr
@@ -11,7 +12,7 @@ function processData(solidityFile, graphData) {
     parser.visit(ast, {
         ImportDirective: (node) => {
             const nodePath = path.join(path.join(solidityFile, '../'), node.path);
-            graphData = processData(nodePath, graphData);
+            iGraphData = processData(nodePath, iGraphData);
         },
         ContractDefinition: (node) => {
             if (node.kind !== 'interface') {
@@ -23,36 +24,36 @@ function processData(solidityFile, graphData) {
                         // navigate through everything happening inside that function
                         fDef.body.statements.forEach((fLink) => {
                             // verify if it's an expression, a function call and not a require
-                            if (fLink.type === 'ExpressionStatement' &&
-                                fLink.expression.type === 'FunctionCall' &&
-                                fLink.expression.expression.name !== 'require') {
+                            if (fLink.type === 'ExpressionStatement'
+                                && fLink.expression.type === 'FunctionCall'
+                                && fLink.expression.expression.name !== 'require') {
                                 // and if so, add to a list
                                 callMethods.push(fLink.expression.expression.name);
                             }
                         });
-                        graphData.push({
+                        iGraphData.push({
                             name: fDef.name,
                             size: 3938,
-                            imports: callMethods
+                            imports: callMethods,
                         });
                     }
                 });
             }
-        }
+        },
     });
-    return graphData;
+    return iGraphData;
 }
 
 exports.generateEdgeBundling = (solidityFile) => {
     // get current path folder
     const currentFolder = path.join(__dirname, '../');
-    // start data 
+    // start data
     let graphData = [];
     graphData = processData(solidityFile, graphData);
     // turn it into a string to save in a file
-    const fileContent = 'var classes=' + JSON.stringify(graphData);
+    const fileContent = `var classes=${JSON.stringify(graphData)}`;
     // write it to a file
     fs.writeFileSync(`${process.cwd()}/docs/data/edge.js`, fileContent);
     // copy styles
     fs.copyFileSync(`${currentFolder}src/template/edgebundling.html`, `${process.cwd()}/docs/edgebundling.html`);
-}
+};

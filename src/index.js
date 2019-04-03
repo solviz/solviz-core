@@ -5,4 +5,4 @@ const { generateEdgeBundling } = require('./edgebundling');
 exports.generateVisualization = (solidityFile) => {
     generateNeural(solidityFile);
     generateEdgeBundling(solidityFile);
-}
+};

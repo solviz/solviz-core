@@ -24,5 +24,10 @@
     "dependencies": {
         "meow": "^5.0.0",
         "solidity-parser-antlr": "^0.4.2"
+    },
+    "devDependencies": {
+        "eslint": "^5.16.0",
+        "eslint-config-airbnb-base": "^13.1.0",
+        "eslint-plugin-import": "^2.16.0"
     }
 }
