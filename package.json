@@ -8,7 +8,7 @@
     },
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "demo": "./bin/cli.js test/contracts/ERC20.sol"
+        "demo": "./bin/cli.js test/contracts/ERC20Burnable.sol"
     },
     "repository": {
         "type": "git",

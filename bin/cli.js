@@ -2,7 +2,7 @@
 
 
 const meow = require('meow');
-const { generateNeural, generateEdgeBundling } = require('../src/index');
+const { generateVisualization } = require('../src/index');
 
 const helpMessage = `
 Usage
@@ -17,5 +17,4 @@ Examples
 `;
 const cli = meow(helpMessage);
 
-generateNeural(String(cli.input));
-generateEdgeBundling(String(cli.input));
+generateVisualization(String(cli.input));
