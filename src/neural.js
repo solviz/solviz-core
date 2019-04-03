@@ -55,5 +55,6 @@ exports.generateNeural = (solidityFile) => {
     // write it to a file
     fs.writeFileSync(`${process.cwd()}/docs/data/neural.js`, fileContent);
     // copy styles
+    fs.copyFileSync(`${currentFolder}src/template/neural.js`, `${process.cwd()}/docs/neural.js`);
     fs.copyFileSync(`${currentFolder}src/template/neural.html`, `${process.cwd()}/docs/neural.html`);
 };

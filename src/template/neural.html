@@ -1,167 +1,44 @@
 <!DOCTYPE html>
-<meta charset="utf-8">
-<style>
-    .links line {
-        stroke: #c1c1c1;
-        stroke-width: 2px;
-        pointer-events: all;
-    }
 
-    .nodes circle {
-        pointer-events: all;
-        stroke: #777;
-        stroke-width: 1px;
-    }
+<head>
+    <meta charset="utf-8">
+    <style>
+        .links line {
+            stroke: #c1c1c1;
+            stroke-width: 2px;
+            pointer-events: all;
+        }
 
-    text {
-        font-family: sans-serif;
-        font-size: 10px;
-    }
+        .nodes circle {
+            pointer-events: all;
+            stroke: #777;
+            stroke-width: 1px;
+        }
 
-    div.tooltip {
-        position: absolute;
-        background-color: white;
-        max-width: 200px;
-        height: auto;
-        padding: 1px;
-        border-style: solid;
-        border-radius: 4px;
-        border-width: 1px;
-        box-shadow: 3px 3px 10px rgba(0, 0, 0, .5);
-        pointer-events: none;
-    }
-</style>
-<svg width="960" height="600"></svg>
-<script src="https://d3js.org/d3.v4.min.js"></script>
-<script src="data/neural.js"></script>
-<script>
+        text {
+            font-family: sans-serif;
+            font-size: 10px;
+        }
 
-    var svg = d3.select("svg"),
-        width = +svg.attr("width"),
-        height = +svg.attr("height");
+        div.tooltip {
+            position: absolute;
+            background-color: white;
+            max-width: 200px;
+            height: auto;
+            padding: 1px;
+            border-style: solid;
+            border-radius: 4px;
+            border-width: 1px;
+            box-shadow: 3px 3px 10px rgba(0, 0, 0, .5);
+            pointer-events: none;
+        }
+    </style>
+</head>
 
-    var tooltip = d3.select("body")
-        .append("div")
-        .attr("class", "tooltip")
-        .style("opacity", 0);
-
-    var color = d3.scaleOrdinal(d3.schemeCategory20);
-
-    var simulation = d3.forceSimulation()
-        .force("link", d3.forceLink().id(function (d) { return d.id; }))
-        .force("charge", d3.forceManyBody())
-        .force("center", d3.forceCenter(width / 2, height / 2));
-
-
-    var link = svg.append("g")
-        .attr("class", "links")
-        .selectAll("line")
-        .data(graph.links)
-        .enter().append("line")
-        .attr("stroke-width", function (d) { return Math.sqrt(d.value); });
-
-    var node = svg.append("g")
-        .attr("class", "nodes")
-        .selectAll("g")
-        .data(graph.nodes)
-        .enter().append("g")
-        .call(d3.drag()
-            .on("start", dragstarted)
-            .on("drag", dragged)
-            .on("end", dragended));
-
-    var circles = node.append("circle")
-        .attr("r", 5)
-        .attr("fill", function (d) { return color(d.group); })
-        .on('mouseover.tooltip', function (d) {
-            tooltip.transition()
-                .duration(300)
-                .style("opacity", .8);
-            tooltip.html("Name:" + d.id + "<p/>group:" + d.group)
-                .style("left", (d3.event.pageX) + "px")
-                .style("top", (d3.event.pageY + 10) + "px");
-        })
-        .on('mouseover.fade', fade(0.1))
-        .on("mouseout.tooltip", function () {
-            tooltip.transition()
-                .duration(100)
-                .style("opacity", 0);
-        })
-        .on('mouseout.fade', fade(1))
-        .on("mousemove", function () {
-            tooltip.style("left", (d3.event.pageX) + "px")
-                .style("top", (d3.event.pageY + 10) + "px");
-        })
-        .on('dblclick', releasenode)
-
-    // show node labels on node
-    var lables = node.append("text")
-        .text(function (d) {
-            return d.id;
-        })
-        .attr('x', 6)
-        .attr('y', 3);
-
-
-    simulation
-        .nodes(graph.nodes)
-        .on("tick", ticked);
-
-    simulation.force("link")
-        .links(graph.links);
-
-    function ticked() {
-        link
-            .attr('x1', d => d.source.x)
-            .attr('y1', d => d.source.y)
-            .attr('x2', d => d.target.x)
-            .attr('y2', d => d.target.y);
-
-        node
-            .attr('transform', d => `translate(${d.x},${d.y})`);
-    }
-
-    function dragstarted(d) {
-        if (!d3.event.active) simulation.alphaTarget(0.3).restart();
-        d.fx = d.x;
-        d.fy = d.y;
-    }
-
-    function dragged(d) {
-        d.fx = d3.event.x;
-        d.fy = d3.event.y;
-    }
-
-    function dragended(d) {
-        if (!d3.event.active) simulation.alphaTarget(0);
-        //d.fx = null;
-        //d.fy = null;
-    }
-    function releasenode(d) {
-        d.fx = null;
-        d.fy = null;
-    }
-
-    function fade(opacity) {
-        return d => {
-            node.style('stroke-opacity', function (o) {
-                const thisOpacity = isConnected(d, o) ? 1 : opacity;
-                this.setAttribute('fill-opacity', thisOpacity);
-                return thisOpacity;
-            });
-
-            link.style('stroke-opacity', o => (o.source === d || o.target === d ? 1 : opacity));
-
-        };
-    }
-
-    function isConnected(a, b) {
-        return linkedByIndex[`${a.index},${b.index}`] || linkedByIndex[`${b.index},${a.index}`] || a.index === b.index;
-    }
-
-    const linkedByIndex = {};
-    graph.links.forEach(d => {
-        linkedByIndex[`${d.source.index},${d.target.index}`] = 1;
-    });
-
-</script>
+<body>
+    <svg width="960" height="600"></svg>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="data/neural.js"></script>
+    <script src="neural.js"></script>
+    <script>renderVisualization(graph)</script>
+</body>

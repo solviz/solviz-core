@@ -55,5 +55,6 @@ exports.generateEdgeBundling = (solidityFile) => {
     // write it to a file
     fs.writeFileSync(`${process.cwd()}/docs/data/edge.js`, fileContent);
     // copy styles
+    fs.copyFileSync(`${currentFolder}src/template/edgebundling.js`, `${process.cwd()}/docs/edgebundling.js`);
     fs.copyFileSync(`${currentFolder}src/template/edgebundling.html`, `${process.cwd()}/docs/edgebundling.html`);
 };
