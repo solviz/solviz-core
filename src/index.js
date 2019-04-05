@@ -6,6 +6,47 @@ const Mustache = require('mustache');
 const { walkSync } = require('./utils/utils');
 
 
+function processNeuralData(solidityFile, graphData) {
+    let iGraphData = graphData;
+    // read file
+    const input = fs.readFileSync(solidityFile).toString();
+    // parse it using solidity-parser-antlr
+    const ast = parser.parse(input);
+    // navigate though all subnodes
+    parser.visit(ast, {
+        ImportDirective: (node) => {
+            const nodePath = path.join(path.join(solidityFile, '../'), node.path);
+            iGraphData = processNeuralData(nodePath, iGraphData);
+        },
+        ContractDefinition: (node) => {
+            if (node.kind !== 'interface') {
+                node.subNodes.forEach((fDef) => {
+                    // verify if they are functions
+                    if (fDef.type === 'FunctionDefinition') {
+                        // and if so, add to a list
+                        iGraphData.nodes.push({ id: fDef.name, contract: node.name });
+                        // navigate through everything happening inside that function
+                        fDef.body.statements.forEach((fLink) => {
+                            // verify if it's an expression, a function call and not a require
+                            if (fLink.type === 'ExpressionStatement'
+                                && fLink.expression.type === 'FunctionCall'
+                                && fLink.expression.expression.name !== 'require') {
+                                // and if so, add to a list
+                                iGraphData.links.push({
+                                    source: fDef.name,
+                                    target: fLink.expression.expression.name,
+                                    value: 1,
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+        },
+    });
+    return iGraphData;
+}
+
 /**
  * Parses the contract and organizes the data to make ready
  * to put in the graphic. This method is recursive
@@ -90,14 +131,16 @@ function generateVisualizationForFile(solidityFile) {
         // get contract name (should be the same as filename?)
         const contractName = filename[1];
         // start data
-        let graphData = [];
-        graphData = processEdgeBundlingData(file, graphData);
+        let graphEdgeData = [];
+        graphEdgeData = processEdgeBundlingData(file, graphEdgeData);
+        let graphNeuralData = { nodes: [], links: [] };
+        graphNeuralData = processNeuralData(file, graphNeuralData);
         // add data to the json
-        allGraphsData.push({ name: contractName, data: graphData });
+        allGraphsData.push({ name: contractName, dataEdge: graphEdgeData, dataNeural: graphNeuralData });
     });
     // transform the template
     const HTMLContent = transformTemplate(
-        `${currentFolder}src/template/edgebundling.html`, allGraphsData,
+        `${currentFolder}src/template/index.html`, allGraphsData,
     );
     // save all data in another file
     fs.writeFileSync(`${process.cwd()}/docs/data.js`, `var allGraphsData=${JSON.stringify(allGraphsData)}`);
@@ -105,6 +148,7 @@ function generateVisualizationForFile(solidityFile) {
     fs.writeFileSync(`${process.cwd()}/docs/index.html`, HTMLContent);
     // copy script that generates graphic
     fs.copyFileSync(`${currentFolder}src/template/edgebundling.js`, `${process.cwd()}/docs/edgebundling.js`);
+    fs.copyFileSync(`${currentFolder}src/template/neural.js`, `${process.cwd()}/docs/neural.js`);
 }
 
 /**

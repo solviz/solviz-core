@@ -10,6 +10,7 @@
     <script src="https://d3js.org/d3.v4.min.js"></script>
     <script src="data.js"></script>
     <script src="edgebundling.js"></script>
+    <script src="neural.js"></script>
     <!-- apply styling :nails: -->
     <style>
         .main {
@@ -18,7 +19,7 @@
             margin: 5% 15% 0% 15%;
         }
 
-        /* graphic related styles */
+        /* edge bundling related styles */
         .node {
             color: black;
             font: 10px sans-serif;
@@ -32,6 +33,37 @@
             stroke: steelblue;
             stroke-opacity: 0.5;
             fill: none;
+            pointer-events: none;
+        }
+
+        /* neural related styles */
+        .links line {
+            stroke: #c1c1c1;
+            stroke-width: 2px;
+            pointer-events: all;
+        }
+
+        .nodes circle {
+            pointer-events: all;
+            stroke: #777;
+            stroke-width: 1px;
+        }
+
+        text {
+            font-family: sans-serif;
+            font-size: 10px;
+        }
+
+        div.tooltip {
+            position: absolute;
+            background-color: white;
+            max-width: 200px;
+            height: auto;
+            padding: 1px;
+            border-style: solid;
+            border-radius: 4px;
+            border-width: 1px;
+            box-shadow: 3px 3px 10px rgba(0, 0, 0, .5);
             pointer-events: none;
         }
     </style>
@@ -48,11 +80,18 @@
                 allGraphsData.forEach((element) => {
                     if (element.name === $("select#smartcontract").val()) {
                         $("svg").empty();
-                        renderEdgeBundlingVisualization(element.data);
+                        $("#floating").empty();
+                        renderEdgeBundlingVisualization(element.dataEdge);
                     }
                 });
             } else if ($("select#graphictype").val() === 'neural') {
-                $("svg").empty();
+                allGraphsData.forEach((element) => {
+                    if (element.name === $("select#smartcontract").val()) {
+                        $("svg").empty();
+                        $("#floating").empty();
+                        renderNeuralVisualization(element.dataNeural);
+                    }
+                });
             }
         }
     </script>
@@ -67,13 +106,14 @@
             <select style="width: 45%;" id="smartcontract">
                 <option value="select" selected disabled>Smart Contract</option>
                 {{#graphsData}}
-                    <option>{{name}}</option>
+                <option>{{name}}</option>
                 {{/graphsData}}
             </select>
             <br />
             <button class="button button-outline" onclick="callme()">Update</button>
         </div>
-        <svg></svg>
+        <svg width="960" height="600"></svg>
+        <div id="floating"></div>
     </div>
 
 </body>

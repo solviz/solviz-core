@@ -56,8 +56,7 @@ function renderNeuralVisualization(graph) {
     const width = +svg.attr('width');
     const height = +svg.attr('height');
 
-    const tooltip = d3.select('body')
-        .append('div')
+    const tooltip = d3.select('#floating')
         .attr('class', 'tooltip')
         .style('opacity', 0);
 
@@ -90,12 +89,12 @@ function renderNeuralVisualization(graph) {
 
     node.append('circle')
         .attr('r', 5)
-        .attr('fill', d => color(d.group))
+        .attr('fill', d => color(d.contract))
         .on('mouseover.tooltip', (d) => {
             tooltip.transition()
                 .duration(300)
                 .style('opacity', 0.8);
-            tooltip.html(`Name:${d.id}<p/>group:${d.group}`)
+            tooltip.html(`Name:${d.id}<p/>Contract:${d.contract}`)
                 .style('left', `${d3.event.pageX}px`)
                 .style('top', `${d3.event.pageY + 10}px`);
         })
