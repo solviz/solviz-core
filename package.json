@@ -23,7 +23,8 @@
     "homepage": "https://github.com/obernardovieira/solvis#readme",
     "dependencies": {
         "meow": "^5.0.0",
-        "solidity-parser-antlr": "^0.4.2"
+        "solidity-parser-antlr": "^0.4.2",
+        "mustache": "^3.0.1"
     },
     "devDependencies": {
         "eslint": "^5.16.0",
