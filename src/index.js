@@ -6,7 +6,7 @@ const Mustache = require('mustache');
 const { walkSync } = require('./utils/utils');
 
 
-function processNeuralData(solidityFile, graphData) {
+function processNeuralData(solidityFile, graphData, importVisited) {
     let iGraphData = graphData;
     // read file
     const input = fs.readFileSync(solidityFile).toString();
@@ -21,7 +21,10 @@ function processNeuralData(solidityFile, graphData) {
             } else {
                 nodePath = path.join(path.join(process.cwd(), 'node_modules'), node.path);
             }
-            iGraphData = processNeuralData(nodePath, iGraphData);
+            if (!importVisited.includes(nodePath)) {
+                importVisited.push(nodePath);
+                [iGraphData, importVisited] = processNeuralData(nodePath, iGraphData, importVisited);
+            }
         },
         ContractDefinition: (node) => {
             if (node.kind !== 'interface') {
@@ -37,7 +40,8 @@ function processNeuralData(solidityFile, graphData) {
                                 && fLink.expression.type === 'FunctionCall'
                                 && fLink.expression.expression.name !== 'require'
                                 && fLink.expression.expression.name !== 'revert'
-                                && fLink.expression.expression.name !== 'assert') {
+                                && fLink.expression.expression.name !== 'assert'
+                                && fLink.expression.expression.name !== undefined) {
                                 // and if so, add to a list
                                 iGraphData.links.push({
                                     source: fDef.name,
@@ -51,7 +55,7 @@ function processNeuralData(solidityFile, graphData) {
             }
         },
     });
-    return iGraphData;
+    return [iGraphData, importVisited];
 }
 
 /**
@@ -61,7 +65,7 @@ function processNeuralData(solidityFile, graphData) {
  * @param {string} solidityFile solidity file path
  * @param {object} graphData data to be given to D3 to render
  */
-function processEdgeBundlingData(solidityFile, graphData) {
+function processEdgeBundlingData(solidityFile, graphData, importVisited) {
     let iGraphData = graphData;
     // read file
     const input = fs.readFileSync(solidityFile).toString();
@@ -77,7 +81,10 @@ function processEdgeBundlingData(solidityFile, graphData) {
             } else {
                 nodePath = path.join(path.join(process.cwd(), 'node_modules'), node.path);
             }
-            iGraphData = processEdgeBundlingData(nodePath, iGraphData);
+            if (!importVisited.includes(nodePath)) {
+                importVisited.push(nodePath);
+                [iGraphData, importVisited] = processEdgeBundlingData(nodePath, iGraphData, importVisited);
+            }
         },
         ContractDefinition: (node) => {
             if (node.kind !== 'interface') {
@@ -93,7 +100,8 @@ function processEdgeBundlingData(solidityFile, graphData) {
                                 && fLink.expression.type === 'FunctionCall'
                                 && fLink.expression.expression.name !== 'require'
                                 && fLink.expression.expression.name !== 'revert'
-                                && fLink.expression.expression.name !== 'assert') {
+                                && fLink.expression.expression.name !== 'assert'
+                                && fLink.expression.expression.name !== undefined) {
                                 // and if so, add to a list
                                 callMethods.push(fLink.expression.expression.name);
                             }
@@ -108,7 +116,7 @@ function processEdgeBundlingData(solidityFile, graphData) {
             }
         },
     });
-    return iGraphData;
+    return [iGraphData, importVisited];
 }
 
 /**
@@ -145,12 +153,10 @@ function generateVisualizationForFile(solidityFile) {
         // get contract name (should be the same as filename?)
         const contractName = filename[1];
         // start data
-        let graphEdgeData = [];
-        graphEdgeData = processEdgeBundlingData(file, graphEdgeData);
-        let graphNeuralData = { nodes: [], links: [] };
-        graphNeuralData = processNeuralData(file, graphNeuralData);
+        const resultGraphEdgeData = processEdgeBundlingData(file, [], []);
+        const resultGraphNeuralData = processNeuralData(file, { nodes: [], links: [] }, []);
         // add data to the json
-        allGraphsData.push({ name: contractName, dataEdge: graphEdgeData, dataNeural: graphNeuralData });
+        allGraphsData.push({ name: contractName, dataEdge: resultGraphEdgeData[0], dataNeural: resultGraphNeuralData[0] });
     });
     // transform the template
     const HTMLContent = transformTemplate(
