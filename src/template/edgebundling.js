@@ -67,7 +67,7 @@ function colorLink(src) {
 }
 
 // eslint-disable-next-line no-unused-vars
-function renderVisualization(classes) {
+function renderEdgeBundlingVisualization(classes) {
     const diameter = 500;
     const radius = diameter / 2;
     const innerRadius = radius - 120;
