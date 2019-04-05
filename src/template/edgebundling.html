@@ -1,25 +1,65 @@
 <!DOCTYPE html>
-<style>
-    .node {
-        color: black;
-        font: 10px sans-serif;
-    }
+<html>
 
-    .node:hover {
-        background-color: yellow;
-    }
+<head>
+    <title>{{contract.name}}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/milligram/1.3.0/milligram.min.css">
+    <style>
+        .main {
+            width: 70%;
+            text-align: center;
+            margin: 5% 15% 0% 15%;
+        }
 
-    .link {
-        stroke: steelblue;
-        stroke-opacity: 0.5;
-        fill: none;
-        pointer-events: none;
-    }
-</style>
+        /* graphic related styles */
+        .node {
+            color: black;
+            font: 10px sans-serif;
+        }
+
+        .node:hover {
+            cursor: pointer;
+        }
+
+        .link {
+            stroke: steelblue;
+            stroke-opacity: 0.5;
+            fill: none;
+            pointer-events: none;
+        }
+    </style>
+</head>
 
 <body>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha256-3edrmyuQ0w65f8gfBsqowzjJe2iM6n0nKciPUp8y+7E=" crossorigin="anonymous"></script>
     <script src="https://d3js.org/d3.v4.min.js"></script>
     <script src="data/{{contract.name}}.js"></script>
     <script src="edgebundling.js"></script>
-    <script>renderVisualization(classes)</script>
+    <script>
+        function callme() {
+            alert($("select#graphictype").val() + " " + $("select#smartcontract").val());
+            $("svg").empty();
+        }
+    </script>
+    <div class="main">
+        <h2>Select one graphic to visualize</h2>
+        <div>
+            <select style="width: 45%;" id="graphictype">
+                <option value="select" selected disabled>Graphic Type</option>
+                <option value="edgebundling">Edge Bundling</option>
+                <option value="neural">Neural</option>
+            </select>
+            <select style="width: 45%;" id="smartcontract">
+                <option value="select" selected disabled>Smart Contract</option>
+            </select>
+            <br />
+            <button class="button button-outline" onclick="callme()">Update</button>
+        </div>
+        <svg></svg>
+        <script>renderVisualization(classes)</script>
+    </div>
+
 </body>
+
+</html>

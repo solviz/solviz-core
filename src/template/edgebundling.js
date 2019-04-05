@@ -68,7 +68,7 @@ function colorLink(src) {
 
 // eslint-disable-next-line no-unused-vars
 function renderVisualization(classes) {
-    const diameter = 650;
+    const diameter = 500;
     const radius = diameter / 2;
     const innerRadius = radius - 120;
 
@@ -80,7 +80,7 @@ function renderVisualization(classes) {
         .radius(d => d.y)
         .angle(d => d.x / 180 * Math.PI);
 
-    const svg = d3.select('body').append('svg')
+    const svg = d3.select('svg')
         .attr('width', diameter)
         .attr('height', diameter)
         .append('g')
