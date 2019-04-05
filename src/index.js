@@ -27,7 +27,7 @@ function processNeuralData(solidityFile, graphData) {
             if (node.kind !== 'interface') {
                 node.subNodes.forEach((fDef) => {
                     // verify if they are functions
-                    if (fDef.type === 'FunctionDefinition') {
+                    if (fDef.type === 'FunctionDefinition' && fDef.isConstructor === false) {
                         // and if so, add to a list
                         iGraphData.nodes.push({ id: fDef.name, contract: node.name });
                         // navigate through everything happening inside that function
@@ -35,7 +35,9 @@ function processNeuralData(solidityFile, graphData) {
                             // verify if it's an expression, a function call and not a require
                             if (fLink.type === 'ExpressionStatement'
                                 && fLink.expression.type === 'FunctionCall'
-                                && fLink.expression.expression.name !== 'require') {
+                                && fLink.expression.expression.name !== 'require'
+                                && fLink.expression.expression.name !== 'revert'
+                                && fLink.expression.expression.name !== 'assert') {
                                 // and if so, add to a list
                                 iGraphData.links.push({
                                     source: fDef.name,
@@ -81,7 +83,7 @@ function processEdgeBundlingData(solidityFile, graphData) {
             if (node.kind !== 'interface') {
                 node.subNodes.forEach((fDef) => {
                     // verify if they are functions
-                    if (fDef.type === 'FunctionDefinition') {
+                    if (fDef.type === 'FunctionDefinition' && fDef.isConstructor === false) {
                         // call methods
                         const callMethods = [];
                         // navigate through everything happening inside that function
@@ -89,7 +91,9 @@ function processEdgeBundlingData(solidityFile, graphData) {
                             // verify if it's an expression, a function call and not a require
                             if (fLink.type === 'ExpressionStatement'
                                 && fLink.expression.type === 'FunctionCall'
-                                && fLink.expression.expression.name !== 'require') {
+                                && fLink.expression.expression.name !== 'require'
+                                && fLink.expression.expression.name !== 'revert'
+                                && fLink.expression.expression.name !== 'assert') {
                                 // and if so, add to a list
                                 callMethods.push(fLink.expression.expression.name);
                             }
