@@ -4,7 +4,7 @@
     "description": "A solidity contract visualizer using d3.js",
     "main": "index.js",
     "bin": {
-        "solvis": "cli.js"
+        "solvis": "bin/cli.js"
     },
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
@@ -29,6 +29,7 @@
     "devDependencies": {
         "eslint": "^5.16.0",
         "eslint-config-airbnb-base": "^13.1.0",
-        "eslint-plugin-import": "^2.16.0"
+        "eslint-plugin-import": "^2.16.0",
+        "openzeppelin-solidity": "2.2.0"
     }
 }

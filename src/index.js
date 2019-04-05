@@ -15,7 +15,12 @@ function processNeuralData(solidityFile, graphData) {
     // navigate though all subnodes
     parser.visit(ast, {
         ImportDirective: (node) => {
-            const nodePath = path.join(path.join(solidityFile, '../'), node.path);
+            let nodePath;
+            if (node.path[0] === '.') {
+                nodePath = path.join(path.join(solidityFile, '../'), node.path);
+            } else {
+                nodePath = path.join(path.join(process.cwd(), 'node_modules'), node.path);
+            }
             iGraphData = processNeuralData(nodePath, iGraphData);
         },
         ContractDefinition: (node) => {
@@ -64,7 +69,12 @@ function processEdgeBundlingData(solidityFile, graphData) {
     parser.visit(ast, {
         ImportDirective: (node) => {
             // if, at any change :joy: it inherits from another contract, then visit it
-            const nodePath = path.join(path.join(solidityFile, '../'), node.path);
+            let nodePath;
+            if (node.path[0] === '.') {
+                nodePath = path.join(path.join(solidityFile, '../'), node.path);
+            } else {
+                nodePath = path.join(path.join(process.cwd(), 'node_modules'), node.path);
+            }
             iGraphData = processEdgeBundlingData(nodePath, iGraphData);
         },
         ContractDefinition: (node) => {

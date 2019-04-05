@@ -27,8 +27,6 @@ function dragged(d) {
 
 function dragended(d) {
     if (!d3.event.active) simulation.alphaTarget(0);
-}
-function releasenode(d) {
     d.fx = null;
     d.fy = null;
 }
@@ -108,8 +106,7 @@ function renderNeuralVisualization(graph) {
         .on('mousemove', () => {
             tooltip.style('left', `${d3.event.pageX}px`)
                 .style('top', `${d3.event.pageY + 10}px`);
-        })
-        .on('dblclick', releasenode);
+        });
 
     // show node labels on node
     node.append('text')
