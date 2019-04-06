@@ -6,13 +6,12 @@ const Mustache = require('mustache');
 const { walkSync } = require('./utils/utils');
 
 
-function isCountableStatement(fLink) {
-    return (fLink.type === 'ExpressionStatement'
-        && fLink.expression.type === 'FunctionCall'
-        && fLink.expression.expression.name !== 'require'
-        && fLink.expression.expression.name !== 'revert'
-        && fLink.expression.expression.name !== 'assert'
-        && fLink.expression.expression.name !== undefined);
+function isCountableStatement(fLink, ignoresList) {
+    return (fLink.expression.name !== 'require'
+        && fLink.expression.name !== 'revert'
+        && fLink.expression.name !== 'assert'
+        && !ignoresList.includes(fLink.expression.name)
+        && fLink.expression.name !== undefined);
 }
 
 /**
@@ -22,13 +21,26 @@ function isCountableStatement(fLink) {
  * @param {string} solidityFile solidity file path
  * @param {object} graphData data to be given to D3 to render
  */
-function processData(solidityFile, graphData, importVisited) {
+function processData(solidityFile, graphData, importVisited, ignoresList) {
     let iGraphData = graphData;
     // read file
     const input = fs.readFileSync(solidityFile).toString();
     // parse it using solidity-parser-antlr
     const ast = parser.parse(input);
-    // navigate though all subnodes
+    // first, we need to collect nodes to be ignored
+    parser.visit(ast, {
+        EventDefinition: (node) => {
+            // since events are also assumed has a function call
+            // let's list them and ignore.
+            ignoresList.push(node.name);
+        },
+        StructDefinition: (node) => {
+            // since struct constructor are also assumed has a function call
+            // let's list them and ignore.
+            ignoresList.push(node.name);
+        },
+    });
+    // and then navigate though all subnodes
     parser.visit(ast, {
         ImportDirective: (node) => {
             // if, at any change :joy: it inherits from another contract, then visit it
@@ -40,7 +52,7 @@ function processData(solidityFile, graphData, importVisited) {
             }
             if (!importVisited.includes(nodePath)) {
                 importVisited.push(nodePath);
-                [iGraphData, importVisited] = processData(nodePath, iGraphData, importVisited);
+                [iGraphData, importVisited, ignoresList] = processData(nodePath, iGraphData, importVisited, ignoresList);
             }
         },
         ContractDefinition: (node) => {
@@ -58,15 +70,34 @@ function processData(solidityFile, graphData, importVisited) {
                     // navigate through everything happening inside that function
                     fDef.body.statements.forEach((fLink) => {
                         // verify if it's an expression, a function call and not a require
-                        if (isCountableStatement(fLink)) {
-                            // and if so, add to a list
-                            callMethods.push(fLink.expression.expression.name);
-                            iGraphData.neural.links.push({
-                                source: fDef.name,
-                                target: fLink.expression.expression.name,
-                                value: 1,
-                            });
-                        }
+                        parser.visit(fLink, {
+                            FunctionCall: (functionCallNode) => {
+                                if (isCountableStatement(functionCallNode, ignoresList)) {
+                                    // and if so, add to a list
+                                    callMethods.push(functionCallNode.expression.name);
+                                    iGraphData.neural.links.push({
+                                        source: fDef.name,
+                                        target: functionCallNode.expression.name,
+                                        value: 1,
+                                    });
+                                }
+                            },
+                            MemberAccess: (functionCallNode) => {
+                                // sometimes, when calling a member from a library, for example
+                                // console.log('yoyo', functionCallNode.memberName);
+                            },
+                            VariableDeclarationStatement: (functionCallNode) => {
+                                // left side will be the variable declaration
+                                // so we navigate only one the right side
+                            },
+                            IfStatement: (functionCallNode) => {
+                                // in case of a if statement we are going to get
+                                // the complete statement and navigate through it
+                            },
+                            ReturnStatement: (functionCallNode) => {
+                                // in case of return fields, we only need to iterathe through them
+                            },
+                        });
                     });
                     iGraphData.edge.push({
                         name: fDef.name,
@@ -77,7 +108,7 @@ function processData(solidityFile, graphData, importVisited) {
             }
         },
     });
-    return [iGraphData, importVisited];
+    return [iGraphData, importVisited, ignoresList];
 }
 
 /**
@@ -114,7 +145,7 @@ function generateVisualizationForFile(solidityFile) {
         // get contract name (should be the same as filename?)
         const contractName = filename[1];
         // start data
-        const resultGraphData = processData(file, { edge: [], neural: { nodes: [], links: [] } }, []);
+        const resultGraphData = processData(file, { edge: [], neural: { nodes: [], links: [] } }, [], []);
         // add data to the json
         allGraphsData.push({ name: contractName, dataEdge: resultGraphData[0].edge, dataNeural: resultGraphData[0].neural });
     });
