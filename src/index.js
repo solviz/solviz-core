@@ -6,60 +6,13 @@ const Mustache = require('mustache');
 const { walkSync } = require('./utils/utils');
 
 
-function processNeuralData(solidityFile, graphData, importVisited) {
-    let iGraphData = graphData;
-    // read file
-    const input = fs.readFileSync(solidityFile).toString();
-    // parse it using solidity-parser-antlr
-    const ast = parser.parse(input);
-    // navigate though all subnodes
-    parser.visit(ast, {
-        ImportDirective: (node) => {
-            let nodePath;
-            if (node.path[0] === '.') {
-                nodePath = path.join(path.join(solidityFile, '../'), node.path);
-            } else {
-                nodePath = path.join(path.join(process.cwd(), 'node_modules'), node.path);
-            }
-            if (!importVisited.includes(nodePath)) {
-                importVisited.push(nodePath);
-                [iGraphData, importVisited] = processNeuralData(nodePath, iGraphData, importVisited);
-            }
-        },
-        ContractDefinition: (node) => {
-            if (node.kind !== 'interface') {
-                node.subNodes.forEach((fDef) => {
-                    // verify if they are functions
-                    if (fDef.type === 'FunctionDefinition' && fDef.isConstructor === false) {
-                        // verify if the node's body is empty (in case it's just a definition)
-                        if (fDef.body === null) {
-                            return;
-                        }
-                        // and if so, add to a list
-                        iGraphData.nodes.push({ id: fDef.name, contract: node.name });
-                        // navigate through everything happening inside that function
-                        fDef.body.statements.forEach((fLink) => {
-                            // verify if it's an expression, a function call and not a require
-                            if (fLink.type === 'ExpressionStatement'
-                                && fLink.expression.type === 'FunctionCall'
-                                && fLink.expression.expression.name !== 'require'
-                                && fLink.expression.expression.name !== 'revert'
-                                && fLink.expression.expression.name !== 'assert'
-                                && fLink.expression.expression.name !== undefined) {
-                                // and if so, add to a list
-                                iGraphData.links.push({
-                                    source: fDef.name,
-                                    target: fLink.expression.expression.name,
-                                    value: 1,
-                                });
-                            }
-                        });
-                    }
-                });
-            }
-        },
-    });
-    return [iGraphData, importVisited];
+function isCountableStatement(fLink) {
+    return (fLink.type === 'ExpressionStatement'
+        && fLink.expression.type === 'FunctionCall'
+        && fLink.expression.expression.name !== 'require'
+        && fLink.expression.expression.name !== 'revert'
+        && fLink.expression.expression.name !== 'assert'
+        && fLink.expression.expression.name !== undefined);
 }
 
 /**
@@ -69,7 +22,7 @@ function processNeuralData(solidityFile, graphData, importVisited) {
  * @param {string} solidityFile solidity file path
  * @param {object} graphData data to be given to D3 to render
  */
-function processEdgeBundlingData(solidityFile, graphData, importVisited) {
+function processData(solidityFile, graphData, importVisited) {
     let iGraphData = graphData;
     // read file
     const input = fs.readFileSync(solidityFile).toString();
@@ -87,39 +40,39 @@ function processEdgeBundlingData(solidityFile, graphData, importVisited) {
             }
             if (!importVisited.includes(nodePath)) {
                 importVisited.push(nodePath);
-                [iGraphData, importVisited] = processEdgeBundlingData(nodePath, iGraphData, importVisited);
+                [iGraphData, importVisited] = processData(nodePath, iGraphData, importVisited);
             }
         },
         ContractDefinition: (node) => {
             if (node.kind !== 'interface') {
                 node.subNodes.forEach((fDef) => {
-                    // verify if they are functions
-                    if (fDef.type === 'FunctionDefinition' && fDef.isConstructor === false) {
-                        // verify if the node's body is empty (in case it's just a definition)
-                        if (fDef.body === null) {
-                            return;
-                        }
-                        // call methods
-                        const callMethods = [];
-                        // navigate through everything happening inside that function
-                        fDef.body.statements.forEach((fLink) => {
-                            // verify if it's an expression, a function call and not a require
-                            if (fLink.type === 'ExpressionStatement'
-                                && fLink.expression.type === 'FunctionCall'
-                                && fLink.expression.expression.name !== 'require'
-                                && fLink.expression.expression.name !== 'revert'
-                                && fLink.expression.expression.name !== 'assert'
-                                && fLink.expression.expression.name !== undefined) {
-                                // and if so, add to a list
-                                callMethods.push(fLink.expression.expression.name);
-                            }
-                        });
-                        iGraphData.push({
-                            name: fDef.name,
-                            size: 3938,
-                            imports: callMethods,
-                        });
+                    // verify if they are functions and
+                    // if the node's body is empty (in case it's just a definition)
+                    if (fDef.type !== 'FunctionDefinition' || fDef.isConstructor === true || fDef.body === null) {
+                        return;
                     }
+                    // call methods
+                    const callMethods = [];
+                    // and if so, add to a list
+                    iGraphData.neural.nodes.push({ id: fDef.name, contract: node.name });
+                    // navigate through everything happening inside that function
+                    fDef.body.statements.forEach((fLink) => {
+                        // verify if it's an expression, a function call and not a require
+                        if (isCountableStatement(fLink)) {
+                            // and if so, add to a list
+                            callMethods.push(fLink.expression.expression.name);
+                            iGraphData.neural.links.push({
+                                source: fDef.name,
+                                target: fLink.expression.expression.name,
+                                value: 1,
+                            });
+                        }
+                    });
+                    iGraphData.edge.push({
+                        name: fDef.name,
+                        size: 3938,
+                        imports: callMethods,
+                    });
                 });
             }
         },
@@ -161,10 +114,9 @@ function generateVisualizationForFile(solidityFile) {
         // get contract name (should be the same as filename?)
         const contractName = filename[1];
         // start data
-        const resultGraphEdgeData = processEdgeBundlingData(file, [], []);
-        const resultGraphNeuralData = processNeuralData(file, { nodes: [], links: [] }, []);
+        const resultGraphData = processData(file, { edge: [], neural: { nodes: [], links: [] } }, []);
         // add data to the json
-        allGraphsData.push({ name: contractName, dataEdge: resultGraphEdgeData[0], dataNeural: resultGraphNeuralData[0] });
+        allGraphsData.push({ name: contractName, dataEdge: resultGraphData[0].edge, dataNeural: resultGraphData[0].neural });
     });
     // transform the template
     const HTMLContent = transformTemplate(
