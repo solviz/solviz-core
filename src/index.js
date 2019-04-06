@@ -31,6 +31,10 @@ function processNeuralData(solidityFile, graphData, importVisited) {
                 node.subNodes.forEach((fDef) => {
                     // verify if they are functions
                     if (fDef.type === 'FunctionDefinition' && fDef.isConstructor === false) {
+                        // verify if the node's body is empty (in case it's just a definition)
+                        if (fDef.body === null) {
+                            return;
+                        }
                         // and if so, add to a list
                         iGraphData.nodes.push({ id: fDef.name, contract: node.name });
                         // navigate through everything happening inside that function
@@ -91,6 +95,10 @@ function processEdgeBundlingData(solidityFile, graphData, importVisited) {
                 node.subNodes.forEach((fDef) => {
                     // verify if they are functions
                     if (fDef.type === 'FunctionDefinition' && fDef.isConstructor === false) {
+                        // verify if the node's body is empty (in case it's just a definition)
+                        if (fDef.body === null) {
+                            return;
+                        }
                         // call methods
                         const callMethods = [];
                         // navigate through everything happening inside that function
