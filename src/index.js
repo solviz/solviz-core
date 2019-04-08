@@ -6,12 +6,58 @@ const Mustache = require('mustache');
 const { walkSync } = require('./utils/utils');
 
 
+/**
+ * Given a state name, verifies if it's one from Solidity
+ * @param {strng} word statement to be verified
+ */
+function isKeywordFunction(word) {
+    return (word === 'require'
+        || word === 'revert'
+        || word === 'assert');
+}
+
+/**
+ * Given a function object and a ignored list, validates it
+ * @param {object} fLink the function object parsed
+ * @param {array} ignoresList a list of ignored function calls
+ */
 function isCountableStatement(fLink, ignoresList) {
-    return (fLink.expression.name !== 'require'
-        && fLink.expression.name !== 'revert'
-        && fLink.expression.name !== 'assert'
+    return (!isKeywordFunction(fLink.expression.name)
         && !ignoresList.includes(fLink.expression.name)
         && fLink.expression.name !== undefined);
+}
+
+/**
+ * Function containing parse methods used in parser.visit
+ */
+function parserFunctionVisitor(contractsList, ignoresList, fDef, callMethods, graphData) {
+    return {
+        FunctionCall: (functionCallNode) => {
+            if (isCountableStatement(functionCallNode, ignoresList)) {
+                // and if so, add to a list
+                callMethods.push(functionCallNode.expression.name);
+                graphData.neural.links.push({
+                    source: fDef.name,
+                    target: functionCallNode.expression.name,
+                    value: 1,
+                });
+            }
+        },
+        MemberAccess: (functionCallNode) => {
+            // sometimes, when calling a member from a library, for example
+            // console.log('yoyo', functionCallNode.memberName);
+            if (functionCallNode.expression.type === 'Identifier'
+                && contractsList.includes(functionCallNode.expression.name)) {
+                // and if so, add to a list
+                callMethods.push(functionCallNode.memberName);
+                graphData.neural.links.push({
+                    source: fDef.name,
+                    target: functionCallNode.memberName,
+                    value: 1,
+                });
+            }
+        },
+    };
 }
 
 /**
@@ -20,9 +66,12 @@ function isCountableStatement(fLink, ignoresList) {
  * to support inheritance.
  * @param {string} solidityFile solidity file path
  * @param {object} graphData data to be given to D3 to render
+ * @param {array} importVisited list of visited contracts
+ * @param {array} ignoresList list of ignored calls
+ * @param {array} contractsList list of contracts names
  */
-function processData(solidityFile, graphData, importVisited, ignoresList) {
-    let iGraphData = graphData;
+function processData(solidityFile, graphData, importVisited, ignoresList, contractsList) {
+    let contractName;
     // read file
     const input = fs.readFileSync(solidityFile).toString();
     // parse it using solidity-parser-antlr
@@ -39,76 +88,52 @@ function processData(solidityFile, graphData, importVisited, ignoresList) {
             // let's list them and ignore.
             ignoresList.push(node.name);
         },
+        ContractDefinition: (node) => {
+            // also, we want to allow only member access
+            // of contracts to be listed
+            contractsList.push(node.name);
+            contractName = node.name;
+        },
     });
     // and then navigate though all subnodes
     parser.visit(ast, {
         ImportDirective: (node) => {
-            // if, at any change :joy: it inherits from another contract, then visit it
+            // if, at any chance :joy: it inherits from another contract, then visit it
             let nodePath;
+            // depending on the import type, build the path
             if (node.path[0] === '.') {
                 nodePath = path.join(path.join(solidityFile, '../'), node.path);
             } else {
                 nodePath = path.join(path.join(process.cwd(), 'node_modules'), node.path);
             }
+            // only visit if it was not visited. Used to ignore ciclyc calls
             if (!importVisited.includes(nodePath)) {
                 importVisited.push(nodePath);
-                [iGraphData, importVisited, ignoresList] = processData(nodePath, iGraphData, importVisited, ignoresList);
+                processData(
+                    nodePath, graphData, importVisited, ignoresList, contractsList,
+                );
             }
         },
-        ContractDefinition: (node) => {
-            if (node.kind !== 'interface') {
-                node.subNodes.forEach((fDef) => {
-                    // verify if they are functions and
-                    // if the node's body is empty (in case it's just a definition)
-                    if (fDef.type !== 'FunctionDefinition' || fDef.isConstructor === true || fDef.body === null) {
-                        return;
-                    }
-                    // call methods
-                    const callMethods = [];
-                    // and if so, add to a list
-                    iGraphData.neural.nodes.push({ id: fDef.name, contract: node.name });
-                    // navigate through everything happening inside that function
-                    fDef.body.statements.forEach((fLink) => {
-                        // verify if it's an expression, a function call and not a require
-                        parser.visit(fLink, {
-                            FunctionCall: (functionCallNode) => {
-                                if (isCountableStatement(functionCallNode, ignoresList)) {
-                                    // and if so, add to a list
-                                    callMethods.push(functionCallNode.expression.name);
-                                    iGraphData.neural.links.push({
-                                        source: fDef.name,
-                                        target: functionCallNode.expression.name,
-                                        value: 1,
-                                    });
-                                }
-                            },
-                            MemberAccess: (functionCallNode) => {
-                                // sometimes, when calling a member from a library, for example
-                                // console.log('yoyo', functionCallNode.memberName);
-                            },
-                            VariableDeclarationStatement: (functionCallNode) => {
-                                // left side will be the variable declaration
-                                // so we navigate only one the right side
-                            },
-                            IfStatement: (functionCallNode) => {
-                                // in case of a if statement we are going to get
-                                // the complete statement and navigate through it
-                            },
-                            ReturnStatement: (functionCallNode) => {
-                                // in case of return fields, we only need to iterathe through them
-                            },
-                        });
-                    });
-                    iGraphData.edge.push({
-                        name: fDef.name,
-                        size: 3938,
-                        imports: callMethods,
-                    });
-                });
+        FunctionDefinition: (fDef) => {
+            // verify if they are functions and
+            // if the node's body is empty (in case it's just a definition)
+            if (fDef.isConstructor === true || fDef.body === null) {
+                return;
             }
+            // call methods
+            const callMethods = [];
+            // and if so, add to a list
+            graphData.neural.nodes.push({ id: fDef.name, contract: contractName });
+            // navigate through everything happening inside that function
+            parser.visit(fDef, parserFunctionVisitor(contractsList, ignoresList, fDef, callMethods, graphData));
+            graphData.edge.push({
+                name: fDef.name,
+                size: 3938,
+                imports: callMethods,
+            });
         },
     });
-    return [iGraphData, importVisited, ignoresList];
+    return graphData;
 }
 
 /**
@@ -145,9 +170,10 @@ function generateVisualizationForFile(solidityFile) {
         // get contract name (should be the same as filename?)
         const contractName = filename[1];
         // start data
-        const resultGraphData = processData(file, { edge: [], neural: { nodes: [], links: [] } }, [], []);
+        const graphData = { edge: [], neural: { nodes: [], links: [] } };
+        processData(file, graphData, [], [], []);
         // add data to the json
-        allGraphsData.push({ name: contractName, dataEdge: resultGraphData[0].edge, dataNeural: resultGraphData[0].neural });
+        allGraphsData.push({ name: contractName, dataEdge: graphData.edge, dataNeural: graphData.neural });
     });
     // transform the template
     const HTMLContent = transformTemplate(
