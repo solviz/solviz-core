@@ -60,7 +60,7 @@ function parserFunctionVisitor(contractsList, ignoresList, fDef, callMethods, gr
         MemberAccess: (functionCallNode) => {
             // sometimes, when calling a member from a library, for example
             if (functionCallNode.expression.type !== 'Identifier'
-            && functionCallNode.expression.type !== 'IndexAccess') {
+                && functionCallNode.expression.type !== 'IndexAccess') {
                 // sometimes, when calling something like
                 // bytes(_tokenURIs[tokenId]).length it returns as a FunctionCall and then
                 // functionCallNode.memberName turns to be "length"
@@ -81,17 +81,14 @@ function parserFunctionVisitor(contractsList, ignoresList, fDef, callMethods, gr
 }
 
 /**
- * Parses the contract and organizes the data to make ready
- * to put in the graphic. This method is recursive
- * to support inheritance.
+ * Gets event definitions, structs and contract names
+ * in order to process data with properly information
  * @param {string} solidityFile solidity file path
- * @param {object} graphData data to be given to D3 to render
  * @param {array} importVisited list of visited contracts
  * @param {array} ignoresList list of ignored calls
  * @param {array} contractsList list of contracts names
  */
-function processData(solidityFile, graphData, importVisited, ignoresList, contractsList) {
-    let contractName;
+function profileData(solidityFile, importVisited, ignoresList, contractsList) {
     // read file
     const input = fs.readFileSync(solidityFile).toString();
     // parse it using solidity-parser-antlr
@@ -112,11 +109,7 @@ function processData(solidityFile, graphData, importVisited, ignoresList, contra
             // also, we want to allow only member access
             // of contracts to be listed
             contractsList.push(node.name);
-            contractName = node.name;
         },
-    });
-    // and then navigate though all subnodes
-    parser.visit(ast, {
         ImportDirective: (node) => {
             // if, at any chance :joy: it inherits from another contract, then visit it
             let nodePath;
@@ -126,19 +119,63 @@ function processData(solidityFile, graphData, importVisited, ignoresList, contra
             } else {
                 nodePath = path.join(path.join(process.cwd(), 'node_modules'), node.path);
             }
-            // only visit if it was not visited. Used to ignore ciclyc calls
             if (!importVisited.includes(nodePath)) {
                 importVisited.push(nodePath);
-                processData(
-                    nodePath, graphData, importVisited, ignoresList, contractsList,
+                profileData(
+                    nodePath, importVisited, ignoresList, contractsList,
                 );
             }
+        },
+    });
+}
+
+/**
+ * Parses the contract and organizes the data to make ready
+ * to put in the graphic. This method is recursive
+ * to support inheritance.
+ * @param {string} solidityFile solidity file path
+ * @param {object} graphData data to be given to D3 to render
+ * @param {array} importVisited list of visited contracts
+ * @param {array} ignoresList list of ignored calls
+ * @param {array} contractsList list of contracts names
+ */
+function processData(solidityFile, graphData, importVisited, ignoresList, contractsList) {
+    let contractName;
+    const importList = [];
+    // read file
+    const input = fs.readFileSync(solidityFile).toString();
+    // parse it using solidity-parser-antlr
+    const ast = parser.parse(input);
+    // and then navigate though all subnodes
+    parser.visit(ast, {
+        ContractDefinition: (node) => {
+            contractName = node.name;
+        },
+        ImportDirective: (node) => {
+            // if, at any chance :joy: it inherits from another contract, then visit it
+            let nodePath;
+            // depending on the import type, build the path
+            if (node.path[0] === '.') {
+                nodePath = path.join(path.join(solidityFile, '../'), node.path);
+            } else {
+                nodePath = path.join(path.join(process.cwd(), 'node_modules'), node.path);
+            }
+            importList.push(nodePath);
         },
         FunctionDefinition: (fDef) => {
             // verify if they are functions and
             // if the node's body is empty (in case it's just a definition)
-            if (fDef.isConstructor === true) {
-                return;
+            if (fDef.isConstructor === true && fDef.modifiers.length > 0) {
+                fDef.modifiers.forEach((modifier) => {
+                    const nodePath = importList.filter(imp => imp.indexOf(modifier.name) > -1)[0];
+                    if (importVisited.includes(nodePath)) {
+                        return;
+                    }
+                    importVisited.push(nodePath);
+                    processData(
+                        nodePath, graphData, importVisited, ignoresList, contractsList,
+                    );
+                });
             }
             // call methods
             const callMethods = [];
@@ -168,6 +205,18 @@ function processData(solidityFile, graphData, importVisited, ignoresList, contra
             }
         },
     });
+    // in the end, visit the imports that were not visited yet
+    // only visit if it was not visited. Used to ignore ciclyc calls
+    importList.forEach((nodePath) => {
+        if (importVisited.includes(nodePath)) {
+            return;
+        }
+        importVisited.push(nodePath);
+        processData(
+            nodePath, graphData, importVisited, ignoresList, contractsList,
+        );
+    });
+    //
     return graphData;
 }
 
@@ -239,7 +288,10 @@ function generateVisualizationForFile(solidityFile) {
         const contractName = filename[1];
         let graphData = { edge: [], neural: { nodes: [], links: [] } };
         // process data
-        processData(file, graphData, [], [], []);
+        const ignoresList = [];
+        const contractsList = [];
+        profileData(file, [], ignoresList, contractsList);
+        processData(file, graphData, [], ignoresList, contractsList);
         // well...
         graphData = lookForLonelyFunctions(graphData);
         // add data to the json
