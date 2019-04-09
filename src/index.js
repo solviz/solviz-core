@@ -45,7 +45,6 @@ function parserFunctionVisitor(contractsList, ignoresList, fDef, callMethods, gr
         },
         MemberAccess: (functionCallNode) => {
             // sometimes, when calling a member from a library, for example
-            // console.log('yoyo', functionCallNode.memberName);
             if (functionCallNode.expression.type === 'Identifier'
                 && contractsList.includes(functionCallNode.expression.name)) {
                 // and if so, add to a list
@@ -137,6 +136,39 @@ function processData(solidityFile, graphData, importVisited, ignoresList, contra
 }
 
 /**
+ * Remove links that does not have a connection
+ * @param graphData complete graph data ready to use in graph visualization
+ */
+function lookForLonelyFunctions(graphData) {
+    // lets assume, every function is lonely, meaning, no connections
+    // if we find that function anywhere, lets add it to the list
+    let nodesToRemove = [];
+    const result = { edge: [], neural: { nodes: [], links: [] } };
+    graphData.edge.forEach((node) => {
+        if (node.imports.length === 0) {
+            // if it does not anything, see if it's imported somewhere
+            const totalImports = graphData.edge.find(is => is.imports.includes(node.name));
+            if (totalImports === undefined || totalImports.length === 0) {
+                nodesToRemove.push(node.name);
+            }
+        }
+    });
+    // removed not linked nodes
+    result.edge = graphData.edge.filter(node => !nodesToRemove.includes(node.name));
+    // do the same for neural visualization
+    nodesToRemove = [];
+    graphData.neural.nodes.forEach((node) => {
+        const totalImports = graphData.neural.links.filter(is => is.source === node.id || is.target === node.id);
+        if (totalImports === undefined || totalImports.length === 0) {
+            nodesToRemove.push(node.id);
+        }
+    });
+    result.neural.nodes = graphData.neural.nodes.filter(node => !nodesToRemove.includes(node.id));
+    result.neural.links = graphData.neural.links;
+    return result;
+}
+
+/**
  * Given the input data, run the render engine to generate a page
  * @param {string} templateFile template file to use as base
  * @param {string} contractName contract name to render
@@ -169,9 +201,11 @@ function generateVisualizationForFile(solidityFile) {
         const filename = file.match(/\/([a-zA-Z0-9_]+)\.sol/);
         // get contract name (should be the same as filename?)
         const contractName = filename[1];
-        // start data
-        const graphData = { edge: [], neural: { nodes: [], links: [] } };
+        let graphData = { edge: [], neural: { nodes: [], links: [] } };
+        // process data
         processData(file, graphData, [], [], []);
+        // well...
+        graphData = lookForLonelyFunctions(graphData);
         // add data to the json
         allGraphsData.push({ name: contractName, dataEdge: graphData.edge, dataNeural: graphData.neural });
     });
