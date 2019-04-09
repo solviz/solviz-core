@@ -7,7 +7,15 @@ const { walkSync } = require('./utils/utils');
 
 
 /**
- * Given a state name, verifies if it's one from Solidity
+ * Given a word, verifies if it's one from Solidity keyword calls
+ * @param {strng} word statement to be verified
+ */
+function isKeywordCall(word) {
+    return (word === 'length');
+}
+
+/**
+ * Given word, verifies if it's one from Solidity keyword functions
  * @param {strng} word statement to be verified
  */
 function isKeywordFunction(word) {
@@ -21,9 +29,10 @@ function isKeywordFunction(word) {
  * @param {object} fLink the function object parsed
  * @param {array} ignoresList a list of ignored function calls
  */
-function isCountableStatement(fLink, ignoresList) {
+function isCountableStatement(fLink, contractsList, ignoresList) {
     return (!isKeywordFunction(fLink.expression.name)
         && !ignoresList.includes(fLink.expression.name)
+        && !contractsList.includes(fLink.expression.name)
         && fLink.expression.name !== undefined);
 }
 
@@ -33,7 +42,12 @@ function isCountableStatement(fLink, ignoresList) {
 function parserFunctionVisitor(contractsList, ignoresList, fDef, callMethods, graphData) {
     return {
         FunctionCall: (functionCallNode) => {
-            if (isCountableStatement(functionCallNode, ignoresList)) {
+            // in order to avoid override methods that only call the base method
+            // let's verify if the expressions is different than the function
+            // and if it's not the only one
+            if (fDef.name !== functionCallNode.expression.name
+                && fDef.body.statements.length > 1
+                && isCountableStatement(functionCallNode, contractsList, ignoresList)) {
                 // and if so, add to a list
                 callMethods.push(functionCallNode.expression.name);
                 graphData.neural.links.push({
@@ -45,8 +59,15 @@ function parserFunctionVisitor(contractsList, ignoresList, fDef, callMethods, gr
         },
         MemberAccess: (functionCallNode) => {
             // sometimes, when calling a member from a library, for example
-            if (functionCallNode.expression.type === 'Identifier'
-                && contractsList.includes(functionCallNode.expression.name)) {
+            if (functionCallNode.expression.type !== 'Identifier'
+            && functionCallNode.expression.type !== 'IndexAccess') {
+                // sometimes, when calling something like
+                // bytes(_tokenURIs[tokenId]).length it returns as a FunctionCall and then
+                // functionCallNode.memberName turns to be "length"
+                // So, in order to prevent it, let's do one last check
+                if (isKeywordCall(functionCallNode.memberName)) {
+                    return;
+                }
                 // and if so, add to a list
                 callMethods.push(functionCallNode.memberName);
                 graphData.neural.links.push({
@@ -116,20 +137,35 @@ function processData(solidityFile, graphData, importVisited, ignoresList, contra
         FunctionDefinition: (fDef) => {
             // verify if they are functions and
             // if the node's body is empty (in case it's just a definition)
-            if (fDef.isConstructor === true || fDef.body === null) {
+            if (fDef.isConstructor === true) {
                 return;
             }
             // call methods
             const callMethods = [];
+            if (fDef.body !== null) {
+                // some functions have empty bodies (like definitions)
+                // let's not visit them
+                // navigate through everything happening inside that function
+                parser.visit(fDef, parserFunctionVisitor(contractsList, ignoresList, fDef, callMethods, graphData));
+            }
             // and if so, add to a list
             graphData.neural.nodes.push({ id: fDef.name, contract: contractName });
-            // navigate through everything happening inside that function
-            parser.visit(fDef, parserFunctionVisitor(contractsList, ignoresList, fDef, callMethods, graphData));
-            graphData.edge.push({
-                name: fDef.name,
-                size: 3938,
-                imports: callMethods,
-            });
+            // since it starts from the ground up, every method that appears again is probably
+            // an overrided method, so let's override it as well.
+            const edgeIndex = graphData.edge.indexOf(graphData.edge.find(funcName => funcName.name === fDef.name));
+            if (edgeIndex !== -1) {
+                graphData.edge[edgeIndex] = {
+                    name: fDef.name,
+                    size: 3938,
+                    imports: callMethods,
+                };
+            } else {
+                graphData.edge.push({
+                    name: fDef.name,
+                    size: 3938,
+                    imports: callMethods,
+                });
+            }
         },
     });
     return graphData;
@@ -146,9 +182,9 @@ function lookForLonelyFunctions(graphData) {
     const result = { edge: [], neural: { nodes: [], links: [] } };
     graphData.edge.forEach((node) => {
         if (node.imports.length === 0) {
-            // if it does not anything, see if it's imported somewhere
+            // if it does not import anything, see if it's imported somewhere
             const totalImports = graphData.edge.find(is => is.imports.includes(node.name));
-            if (totalImports === undefined || totalImports.length === 0) {
+            if (totalImports === undefined) {
                 nodesToRemove.push(node.name);
             }
         }
