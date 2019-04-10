@@ -6,6 +6,12 @@ const Mustache = require('mustache');
 const { walkSync } = require('./utils/utils');
 
 
+// meanwhile this is not a thing, thanks to https://stackoverflow.com/a/45410295/3348623
+// eslint-disable-next-line no-extend-native,func-names
+Array.prototype.flatMap = function (selector) {
+    return this.reduce((prev, next) => (/* first */ selector(prev) || /* all after first */ prev).concat(selector(next)));
+};
+
 /**
  * Given a word, verifies if it's one from Solidity keyword calls
  * @param {strng} word statement to be verified
@@ -59,7 +65,7 @@ function parserFunctionVisitor(contractsList, ignoresList, fDef, callMethods, gr
         },
         MemberAccess: (functionCallNode) => {
             // sometimes, when calling a member from a library, for example
-            if (functionCallNode.expression.type !== 'Identifier'
+            if ((functionCallNode.expression.type !== 'Identifier' || functionCallNode.expression.name === 'super')
                 && functionCallNode.expression.type !== 'IndexAccess') {
                 // sometimes, when calling something like
                 // bytes(_tokenURIs[tokenId]).length it returns as a FunctionCall and then
@@ -198,12 +204,18 @@ function processData(solidityFile, graphData, importVisited, ignoresList, contra
                 // since it starts from the ground up, every method that appears again is probably
                 // an overrided method, so let's override it as well.
                 const edgeIndex = graphData.edge.indexOf(graphData.edge.find(funcName => funcName.name === fDef.name));
+                const superCall = callMethods.indexOf(fDef.name);
                 if (edgeIndex !== -1) {
-                    graphData.edge[edgeIndex] = {
-                        name: fDef.name,
-                        size: 3938,
-                        imports: callMethods,
-                    };
+                    if (superCall !== -1) {
+                        callMethods[superCall] = graphData.edge[edgeIndex].imports;
+                        graphData.edge[edgeIndex].imports = callMethods.flatMap(i => i);
+                    } else {
+                        graphData.edge[edgeIndex] = {
+                            name: fDef.name,
+                            size: 3938,
+                            imports: callMethods,
+                        };
+                    }
                 } else {
                     graphData.edge.push({
                         name: fDef.name,
