@@ -147,6 +147,10 @@ function processData(solidityFile, graphData, importVisited, ignoresList, contra
     // parse it using solidity-parser-antlr
     const ast = parser.parse(input);
     // and then navigate though all subnodes
+    // it might look weird, but the reason to have separated each call in a new parse.visit
+    // is because this definition are not called in this code order and instead called
+    // in the order defined on the parser package
+    // first we get the contract name and imports, the order is not relevant here
     parser.visit(ast, {
         ContractDefinition: (node) => {
             contractName = node.name;
@@ -162,46 +166,63 @@ function processData(solidityFile, graphData, importVisited, ignoresList, contra
             }
             importList.push(nodePath);
         },
+    });
+    // then we navigate through all function definition
+    // one of them might be a constructor and in case it calls other constructor
+    // let's navigate through them
+    parser.visit(ast, {
         FunctionDefinition: (fDef) => {
             // verify if they are functions and
             // if the node's body is empty (in case it's just a definition)
-            if (fDef.isConstructor === true && fDef.modifiers.length > 0) {
+            if (fDef.isConstructor === true) {
                 fDef.modifiers.forEach((modifier) => {
                     const nodePath = importList.filter(imp => imp.indexOf(modifier.name) > -1)[0];
-                    if (importVisited.includes(nodePath)) {
-                        return;
+                    if (!importVisited.includes(nodePath)) {
+                        importVisited.push(nodePath);
+                        processData(
+                            nodePath, graphData, importVisited, ignoresList, contractsList,
+                        );
                     }
-                    importVisited.push(nodePath);
-                    processData(
-                        nodePath, graphData, importVisited, ignoresList, contractsList,
-                    );
                 });
-            }
-            // call methods
-            const callMethods = [];
-            if (fDef.body !== null) {
-                // some functions have empty bodies (like definitions)
-                // let's not visit them
-                // navigate through everything happening inside that function
-                parser.visit(fDef, parserFunctionVisitor(contractsList, ignoresList, fDef, callMethods, graphData));
-            }
-            // and if so, add to a list
-            graphData.neural.nodes.push({ id: fDef.name, contract: contractName });
-            // since it starts from the ground up, every method that appears again is probably
-            // an overrided method, so let's override it as well.
-            const edgeIndex = graphData.edge.indexOf(graphData.edge.find(funcName => funcName.name === fDef.name));
-            if (edgeIndex !== -1) {
-                graphData.edge[edgeIndex] = {
-                    name: fDef.name,
-                    size: 3938,
-                    imports: callMethods,
-                };
             } else {
-                graphData.edge.push({
-                    name: fDef.name,
-                    size: 3938,
-                    imports: callMethods,
-                });
+                // call methods
+                const callMethods = [];
+                if (fDef.body !== null) {
+                    // some functions have empty bodies (like definitions)
+                    // let's not visit them
+                    // navigate through everything happening inside that function
+                    parser.visit(fDef, parserFunctionVisitor(contractsList, ignoresList, fDef, callMethods, graphData));
+                }
+                // and if so, add to a list
+                graphData.neural.nodes.push({ id: fDef.name, contract: contractName });
+                // since it starts from the ground up, every method that appears again is probably
+                // an overrided method, so let's override it as well.
+                const edgeIndex = graphData.edge.indexOf(graphData.edge.find(funcName => funcName.name === fDef.name));
+                if (edgeIndex !== -1) {
+                    graphData.edge[edgeIndex] = {
+                        name: fDef.name,
+                        size: 3938,
+                        imports: callMethods,
+                    };
+                } else {
+                    graphData.edge.push({
+                        name: fDef.name,
+                        size: 3938,
+                        imports: callMethods,
+                    });
+                }
+            }
+        },
+    });
+    // then visit the not yet visited node according to "extends" order
+    parser.visit(ast, {
+        InheritanceSpecifier: (node) => {
+            const nodePath = importList.filter(imp => imp.indexOf(node.baseName.namePath) > -1)[0];
+            if (!importVisited.includes(nodePath)) {
+                importVisited.push(nodePath);
+                processData(
+                    nodePath, graphData, importVisited, ignoresList, contractsList,
+                );
             }
         },
     });
