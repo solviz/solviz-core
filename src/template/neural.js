@@ -4,6 +4,11 @@ let link;
 let node;
 
 function ticked() {
+    const svg = d3.select('svg');
+    const width = +svg.attr('width');
+    const height = +svg.attr('height');
+    const radius = 6;
+
     link
         .attr('x1', d => d.source.x)
         .attr('y1', d => d.source.y)
@@ -11,7 +16,9 @@ function ticked() {
         .attr('y2', d => d.target.y);
 
     node
-        .attr('transform', d => `translate(${d.x},${d.y})`);
+        .attr('transform', d => `translate(
+            ${Math.max(radius, Math.min(width - radius, d.x))},
+            ${Math.max(radius, Math.min(height - radius, d.y))})`);
 }
 
 function dragstarted(d) {
@@ -50,9 +57,11 @@ function fade(opacity) {
 
 // eslint-disable-next-line no-unused-vars
 function renderNeuralVisualization(graph) {
-    const svg = d3.select('svg');
-    const width = +svg.attr('width');
-    const height = +svg.attr('height');
+    const width = 1200;
+    const height = 600;
+    const svg = d3.select('svg')
+        .attr('width', width)
+        .attr('height', height);
 
     const tooltip = d3.select('#floating')
         .attr('class', 'tooltip')
