@@ -42,6 +42,14 @@ function isCountableStatement(fLink, contractsList, ignoresList) {
         && fLink.expression.name !== undefined);
 }
 
+function generateFunctionUniqueIdentification(fCall) {
+    let uid = fCall.expression.name;
+    fCall.arguments.forEach((args) => {
+        uid += args.type;
+    });
+    return uid;
+}
+
 /**
  * Function containing parse methods used in parser.visit
  */
@@ -55,6 +63,7 @@ function parserFunctionVisitor(contractsList, ignoresList, fDef, callMethods, gr
                 && fDef.body.statements.length > 1
                 && isCountableStatement(functionCallNode, contractsList, ignoresList)) {
                 // and if so, add to a list
+                console.log(generateFunctionUniqueIdentification(functionCallNode));
                 callMethods.push(functionCallNode.expression.name);
                 graphData.neural.links.push({
                     source: fDef.name,
@@ -199,6 +208,11 @@ function processData(solidityFile, graphData, importVisited, ignoresList, contra
                     // navigate through everything happening inside that function
                     parser.visit(fDef, parserFunctionVisitor(contractsList, ignoresList, fDef, callMethods, graphData));
                 }
+                // generate a unique identification based in function method and parameters
+                let functionUniqueDefinition = fDef.name;
+                fDef.parameters.parameters.forEach((paramsDef) => {
+                    functionUniqueDefinition += paramsDef.typeName.name;
+                });
                 // and if so, add to a list
                 graphData.neural.nodes.push({ id: fDef.name, contract: contractName });
                 // since it starts from the ground up, every method that appears again is probably
@@ -207,18 +221,29 @@ function processData(solidityFile, graphData, importVisited, ignoresList, contra
                 const superCall = callMethods.indexOf(fDef.name);
                 if (edgeIndex !== -1) {
                     if (superCall !== -1) {
+                        // if it's a super.method, add methods from super
                         callMethods[superCall] = graphData.edge[edgeIndex].imports;
                         graphData.edge[edgeIndex].imports = callMethods.flatMap(i => i);
-                    } else {
+                    } else if (graphData.edge[edgeIndex].uid === functionUniqueDefinition) {
+                        // otherwise, override, if the params are the same
                         graphData.edge[edgeIndex] = {
                             name: fDef.name,
                             size: 3938,
                             imports: callMethods,
                         };
+                    } else {
+                        // but if it's an overloading method with different parameters, add another
+                        graphData.edge.push({
+                            name: `${fDef.name}*`,
+                            uid: functionUniqueDefinition,
+                            size: 3938,
+                            imports: callMethods,
+                        });
                     }
                 } else {
                     graphData.edge.push({
                         name: fDef.name,
+                        uid: functionUniqueDefinition,
                         size: 3938,
                         imports: callMethods,
                     });
