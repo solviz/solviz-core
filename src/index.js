@@ -267,6 +267,8 @@ function lookForLonelyFunctions(graphData) {
     // if we find that function anywhere, lets add it to the list
     let nodesToRemove = [];
     const result = { edge: [], neural: { nodes: [], links: [] } };
+    // we need to apply different clean methods for each graphic
+    // let's start by cleaning edge bundeling
     graphData.edge.forEach((node) => {
         if (node.imports.length === 0) {
             // if it does not import anything, see if it's imported somewhere
@@ -280,6 +282,18 @@ function lookForLonelyFunctions(graphData) {
     result.edge = graphData.edge.filter(node => !nodesToRemove.includes(node.name));
     // do the same for neural visualization
     nodesToRemove = [];
+    // remove duplicated nodes
+    const cleanNodes = [];
+    const uCleanNodes = [];
+    graphData.neural.nodes.forEach((node) => {
+        const uNode = node.id + node.contract;
+        if (!uCleanNodes.includes(uNode)) {
+            uCleanNodes.push(uNode);
+            cleanNodes.push(node);
+        }
+    });
+    graphData.neural.nodes = cleanNodes;
+    // if a node is not a source nor a target, then remove it
     graphData.neural.nodes.forEach((node) => {
         const totalImports = graphData.neural.links.filter(is => is.source === node.id || is.target === node.id);
         if (totalImports === undefined || totalImports.length === 0) {
