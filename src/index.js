@@ -208,22 +208,24 @@ function processData(solidityFile, graphData, importVisited, ignoresList, contra
                 // an overrided method, so let's override it as well.
                 const edgeIndex = graphData.edge.indexOf(graphData.edge.find(funcName => funcName.name === fDef.name));
                 const superCall = callMethods.indexOf(fDef.name);
+                // remove duplicated
+                const cleanCallMethods = callMethods.filter((e, p) => callMethods.indexOf(e) === p);
                 if (edgeIndex !== -1) {
                     if (superCall !== -1) {
-                        callMethods[superCall] = graphData.edge[edgeIndex].imports;
-                        graphData.edge[edgeIndex].imports = callMethods.flatMap(i => i);
+                        cleanCallMethods[superCall] = graphData.edge[edgeIndex].imports;
+                        graphData.edge[edgeIndex].imports = cleanCallMethods.flatMap(i => i);
                     } else {
                         graphData.edge[edgeIndex] = {
                             name: fDef.name,
                             size: 3938,
-                            imports: callMethods,
+                            imports: cleanCallMethods,
                         };
                     }
                 } else {
                     graphData.edge.push({
                         name: fDef.name,
                         size: 3938,
-                        imports: callMethods,
+                        imports: cleanCallMethods,
                     });
                 }
             }
