@@ -55,6 +55,7 @@ function parserFunctionVisitor(contractsList, ignoresList, fDef, callMethods, gr
                 && fDef.body.statements.length > 1
                 && isCountableStatement(functionCallNode, contractsList, ignoresList)) {
                 // and if so, add to a list
+
                 callMethods.push(functionCallNode.expression.name);
                 graphData.neural.links.push({
                     source: fDef.name,
@@ -65,7 +66,9 @@ function parserFunctionVisitor(contractsList, ignoresList, fDef, callMethods, gr
         },
         MemberAccess: (functionCallNode) => {
             // sometimes, when calling a member from a library, for example
-            if ((functionCallNode.expression.type !== 'Identifier' || functionCallNode.expression.name === 'super')
+            if ((functionCallNode.expression.type !== 'Identifier'
+                || contractsList.includes(functionCallNode.expression.name)
+                || functionCallNode.expression.name === 'super')
                 && functionCallNode.expression.type !== 'IndexAccess') {
                 // sometimes, when calling something like
                 // bytes(_tokenURIs[tokenId]).length it returns as a FunctionCall and then
