@@ -45,7 +45,7 @@ function isCountableStatement(fLink, contractsList, ignoresList) {
 /**
  * Function containing parse methods used in parser.visit
  */
-function parserFunctionVisitor(contractsList, ignoresList, fDef, callMethods, graphData) {
+function parserFunctionVisitor(contractsList, ignoresList, fDef, callMethods, graphData, contractName) {
     return {
         FunctionCall: (functionCallNode) => {
             // in order to avoid override methods that only call the base method
@@ -55,13 +55,18 @@ function parserFunctionVisitor(contractsList, ignoresList, fDef, callMethods, gr
                 && fDef.body.statements.length > 1
                 && isCountableStatement(functionCallNode, contractsList, ignoresList)) {
                 // and if so, add to a list
-
                 callMethods.push(functionCallNode.expression.name);
-                graphData.neural.links.push({
-                    source: fDef.name,
-                    target: functionCallNode.expression.name,
-                    value: 1,
-                });
+                // links should be added with a proper id
+                const idNode = graphData.neural.nodes.find(
+                    n => n.method === functionCallNode.expression.name && n.contract === contractName,
+                );
+                if (idNode !== undefined) {
+                    graphData.neural.links.push({
+                        source: fDef.name + contractName,
+                        target: idNode.method + idNode.contract,
+                        value: 1,
+                    });
+                }
             }
         },
         MemberAccess: (functionCallNode) => {
@@ -79,11 +84,17 @@ function parserFunctionVisitor(contractsList, ignoresList, fDef, callMethods, gr
                 }
                 // and if so, add to a list
                 callMethods.push(functionCallNode.memberName);
-                graphData.neural.links.push({
-                    source: fDef.name,
-                    target: functionCallNode.memberName,
-                    value: 1,
-                });
+                // links should be added with a proper id
+                const idNode = graphData.neural.nodes.find(
+                    n => n.method === functionCallNode.memberName && n.contract === contractName,
+                );
+                if (idNode !== undefined) {
+                    graphData.neural.links.push({
+                        source: fDef.name + contractName,
+                        target: idNode.method + idNode.contract,
+                        value: 1,
+                    });
+                }
             }
         },
     };
@@ -200,10 +211,11 @@ function processData(solidityFile, graphData, importVisited, ignoresList, contra
                     // some functions have empty bodies (like definitions)
                     // let's not visit them
                     // navigate through everything happening inside that function
-                    parser.visit(fDef, parserFunctionVisitor(contractsList, ignoresList, fDef, callMethods, graphData));
+                    parser.visit(fDef,
+                        parserFunctionVisitor(contractsList, ignoresList, fDef, callMethods, graphData, contractName));
                 }
                 // and if so, add to a list
-                graphData.neural.nodes.push({ id: fDef.name, contract: contractName });
+                graphData.neural.nodes.push({ id: fDef.name + contractName, method: fDef.name, contract: contractName });
                 // since it starts from the ground up, every method that appears again is probably
                 // an overrided method, so let's override it as well.
                 const edgeIndex = graphData.edge.indexOf(graphData.edge.find(funcName => funcName.name === fDef.name));
