@@ -84,6 +84,7 @@ function processData(solidityFile, importVisited, ignoresList, contractsList) {
     const methodCalls = [];
     const importList = [];
     const processed = [];
+    const extendsContracts = [];
     // read file
     const input = fs.readFileSync(solidityFile).toString();
     // parse it using solidity-parser-antlr
@@ -96,7 +97,6 @@ function processData(solidityFile, importVisited, ignoresList, contractsList) {
     parser.visit(ast, {
         ContractDefinition: (node) => {
             contractName = node.name;
-            console.log(contractName);
         },
         ImportDirective: (node) => {
             // if, at any chance :joy: it inherits from another contract, then visit it
@@ -153,6 +153,7 @@ function processData(solidityFile, importVisited, ignoresList, contractsList) {
                 );
                 result.forEach(i => processed.push(i));
             }
+            extendsContracts.push(node.baseName.namePath);
         },
     });
     // in the end, visit the imports that were not visited yet
@@ -167,7 +168,7 @@ function processData(solidityFile, importVisited, ignoresList, contractsList) {
         );
         result.forEach(i => processed.push(i));
     });
-    processed.push({ contractName, methodCalls });
+    processed.push({ contractName, extendsContracts, methodCalls });
     return processed;
 }
 
@@ -228,6 +229,6 @@ exports.parsing = (solidityFile) => {
         profileData(file, [], ignoresList, contractsList);
         const data = processData(file, [], [], ignoresList, contractsList);
         //
-        console.log(data);
+        console.log(data[7].methodCalls[3]);
     });
 };
