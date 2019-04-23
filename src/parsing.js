@@ -2,6 +2,8 @@ const parser = require('solidity-parser-antlr');
 const path = require('path');
 const fs = require('fs');
 
+const { transformForEdgeBundeling } = require('./graphics/edgebundeling');
+const { transformForNeural } = require('./graphics/neural');
 
 /**
  * Given a word, verifies if it's one from Solidity keyword calls
@@ -74,7 +76,6 @@ function parserFunctionVisitor(contractsList, ignoresList, fDef, callMethods) {
  * to put in the graphic. This method is recursive
  * to support inheritance.
  * @param {string} solidityFile solidity file path
- * @param {object} graphData data to be given to D3 to render
  * @param {array} importVisited list of visited contracts
  * @param {array} ignoresList list of ignored calls
  * @param {array} contractsList list of contracts names
@@ -168,7 +169,9 @@ function processData(solidityFile, importVisited, ignoresList, contractsList) {
         );
         result.forEach(i => processed.push(i));
     });
-    processed.push({ contractName, extendsContracts, methodCalls });
+    processed.push({
+        contractName, extendsContracts, importList, methodCalls,
+    });
     return processed;
 }
 
@@ -221,14 +224,88 @@ function profileData(solidityFile, importVisited, ignoresList, contractsList) {
     });
 }
 
-exports.parsing = (solidityFile) => {
-    solidityFile.forEach((file) => {
+
+/**
+ * Find and rename a given call in a given contract using the list of all contracts.
+ * @param {object} contracts all contracts object for a specific contract (dependencies)
+ * @param {object} contractInfo the contract info
+ * @param {string} call the method name
+ */
+function findAndRenameCall(contracts, contractInfo, call) {
+    if (contracts === undefined) {
+        return undefined;
+    }
+    let foundResult;
+    // first, search for that method in the same contract
+    foundResult = contractInfo.methodCalls
+        .find(method => method.functionName === call);
+    if (foundResult !== undefined) {
+        return `${contractInfo.contractName}:${call}`;
+    }
+    // otherwise, let's look in parent contracts
+    contractInfo.extendsContracts.forEach((extending) => {
+        // look for it and visit
+        const contractToVisit = contracts.find(c => c.contractName === extending);
+        const result = findAndRenameCall(contracts, contractToVisit, call);
+        if (result !== undefined) {
+            foundResult = result;
+        }
+    });
+    // if we didn't found in extend contracts, let's search over the imported
+    // that are not in extend list
+    if (foundResult === undefined) {
+        contractInfo.importList.forEach((importContract) => {
+            // take only the contract name
+            const contractName = path.parse(importContract).name;
+            // and if it's not in import list
+            if (!contractInfo.extendsContracts.includes(contractName)) {
+                // look for it and visit
+                const contractToVisit = contracts.find(c => c.contractName === contractName);
+                const result = findAndRenameCall(contracts, contractToVisit, call);
+                if (result !== undefined) {
+                    foundResult = result;
+                }
+            }
+        });
+    }
+    return foundResult;
+}
+
+/**
+ * Transform the method into a pseudo-link. As an example, transform `callMethods: [ 'method' ]`
+ * in something line `callMethods: [ 'contract:method' ]` and so we know where is it going.
+ * It looks for overriding methods.
+ * @param {object} allContractsData all contracts data
+ */
+function renameToSymLinks(allContractsData) {
+    allContractsData.forEach((contract) => {
+        contract.contract.forEach((contractInfo) => {
+            contractInfo.methodCalls.forEach((method) => {
+                // update the call methods
+                method.callMethods = method.callMethods
+                    .map(call => findAndRenameCall(contract.contract, contractInfo, call));
+            });
+        });
+    });
+    return allContractsData;
+}
+
+exports.parsing = (solidityFilesPath) => {
+    let contractsArray = [];
+    // first we process and organize data in order to have a standard
+    solidityFilesPath.forEach((file) => {
         // process data
         const ignoresList = [];
         const contractsList = [];
         profileData(file, [], ignoresList, contractsList);
-        const data = processData(file, [], [], ignoresList, contractsList);
+        const contract = processData(file, [], ignoresList, contractsList);
         //
-        console.log(data[7].methodCalls[3]);
+        contractsArray.push({ file, contract });
+    });
+    contractsArray = renameToSymLinks(contractsArray);
+    // and then we transform from graphic
+    contractsArray.forEach((dataElement) => {
+        transformForEdgeBundeling(dataElement.file, dataElement.contract);
+        transformForNeural(dataElement.file, dataElement.contract);
     });
 };
