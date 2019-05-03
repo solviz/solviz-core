@@ -4,7 +4,7 @@ import 'openzeppelin-solidity/contracts/token/ERC721/ERC721Full.sol';
 import 'openzeppelin-solidity/contracts/token/ERC721/ERC721Mintable.sol';
 import './Helper.sol';
 import './Data.sol';
-import './Allow.sol';
+// import './Allow.sol';
 
 contract MyNFT is ERC721Full, ERC721Mintable, Data, Helper {
 

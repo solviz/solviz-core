@@ -48,7 +48,7 @@ function parserFunctionVisitor(contractsList, ignoresList, fDef, callMethods) {
                 && fDef.body.statements.length > 1
                 && isCountableStatement(functionCallNode, contractsList, ignoresList)) {
                 // and if so, add to a list
-                callMethods.push(functionCallNode.expression.name);
+                callMethods.push({ name: functionCallNode.expression.name, args: functionCallNode.arguments });
             }
         },
         MemberAccess: (functionCallNode) => {
@@ -65,7 +65,13 @@ function parserFunctionVisitor(contractsList, ignoresList, fDef, callMethods) {
                     return;
                 }
                 // and if so, add to a list
-                callMethods.push(functionCallNode.memberName);
+                const hasArguments = Object.prototype.hasOwnProperty
+                    .call(functionCallNode.expression, 'arguments');
+                if (hasArguments) {
+                    callMethods.push({ name: functionCallNode.memberName, args: functionCallNode.expression.arguments });
+                } else {
+                    callMethods.push({ name: functionCallNode.memberName, args: [] });
+                }
             }
         },
     };
@@ -138,8 +144,15 @@ function processData(solidityFile, importVisited, ignoresList, contractsList) {
                     // navigate through everything happening inside that function
                     parser.visit(fDef, parserFunctionVisitor(contractsList, ignoresList, fDef, callMethods));
                 }
+                // let's create a function definition using the contract name,
+                // function name and parameters type
+                let functionDefinition = `${contractName}:${fDef.name}`;
+                fDef.parameters.parameters.forEach((p) => {
+                    functionDefinition += `:${(p.typeName.name === undefined)
+                        ? (p.typeName.namePath) : (p.typeName.name)}`;
+                });
                 // and if so, add to a list
-                methodCalls.push({ functionName: fDef.name, callMethods });
+                methodCalls.push({ functionName: fDef.name, functionDefinition, callMethods });
             }
         },
     });
@@ -182,14 +195,20 @@ function processData(solidityFile, importVisited, ignoresList, contractsList) {
  * @param {array} importVisited list of visited contracts
  * @param {array} ignoresList list of ignored calls
  * @param {array} contractsList list of contracts names
+ * @param {array} variableType map of variable and respective types
  */
-function profileData(solidityFile, importVisited, ignoresList, contractsList) {
+function profileData(solidityFile, importVisited, ignoresList, contractsList, variableType) {
+    let contractName = '';
+    const contractVariables = new Map();
     // read file
     const input = fs.readFileSync(solidityFile).toString();
     // parse it using solidity-parser-antlr
     const ast = parser.parse(input);
     // first, we need to collect nodes to be ignored
     parser.visit(ast, {
+        VariableDeclaration: (node) => {
+            contractVariables.set(node.name, node);
+        },
         EventDefinition: (node) => {
             // since events are also assumed has a function call
             // let's list them and ignore.
@@ -204,6 +223,7 @@ function profileData(solidityFile, importVisited, ignoresList, contractsList) {
             // also, we want to allow only member access
             // of contracts to be listed
             contractsList.push(node.name);
+            contractName = node.name;
         },
         ImportDirective: (node) => {
             // if, at any chance :joy: it inherits from another contract, then visit it
@@ -217,13 +237,13 @@ function profileData(solidityFile, importVisited, ignoresList, contractsList) {
             if (!importVisited.includes(nodePath)) {
                 importVisited.push(nodePath);
                 profileData(
-                    nodePath, importVisited, ignoresList, contractsList,
+                    nodePath, importVisited, ignoresList, contractsList, variableType,
                 );
             }
         },
     });
+    variableType.set(contractName, contractVariables);
 }
-
 
 /**
  * Find and rename a given call in a given contract using the list of all contracts.
@@ -231,22 +251,51 @@ function profileData(solidityFile, importVisited, ignoresList, contractsList) {
  * @param {object} contractInfo the contract info
  * @param {string} call the method name
  */
-function findAndRenameCall(contracts, contractInfo, call) {
+function findAndRenameCall(contracts, contractRoot, contractInfo, variableTypeMap, call) {
     if (contracts === undefined) {
         return undefined;
     }
     let foundResult;
     // first, search for that method in the same contract
     foundResult = contractInfo.methodCalls
-        .find(method => method.functionName === call);
+        .find(method => method.functionName === call.name);
     if (foundResult !== undefined) {
-        return `${contractInfo.contractName}:${call}`;
+        let functionDefinition = `${contractInfo.contractName}:${call.name}`;
+        if (call.args !== undefined) {
+            call.args.forEach((p) => {
+                // if the argument is an indentifier, just add the type
+                if (p.type === 'Identifier') {
+                    // search for variable and get the type.
+                    let argType;
+                    // search names globally
+                    // TODO: this should be improved!
+                    variableTypeMap.forEach((valueVar) => {
+                        valueVar.forEach((value, key) => {
+                            if (key === p.name && argType === undefined) {
+                                argType = (value.typeName.name === undefined)
+                                    ? (value.typeName.namePath) : (value.typeName.name);
+                            }
+                        }, valueVar);
+                    }, variableTypeMap);
+                    functionDefinition += `:${argType}`;
+                } else if (p.type === 'MemberAccess') {
+                    // but in case it's a member access, there could be a few different things
+                    // like msg.sender, msg.value, etc
+                    if (p.memberName === 'sender') {
+                        functionDefinition += ':address';
+                    } else if (p.memberName === 'value') {
+                        functionDefinition += ':uint256';
+                    }
+                }
+            });
+        }
+        return functionDefinition;
     }
     // otherwise, let's look in parent contracts
     contractInfo.extendsContracts.forEach((extending) => {
         // look for it and visit
         const contractToVisit = contracts.find(c => c.contractName === extending);
-        const result = findAndRenameCall(contracts, contractToVisit, call);
+        const result = findAndRenameCall(contracts, contractRoot,contractToVisit, variableTypeMap, call);
         if (result !== undefined) {
             foundResult = result;
         }
@@ -261,7 +310,7 @@ function findAndRenameCall(contracts, contractInfo, call) {
             if (!contractInfo.extendsContracts.includes(contractName)) {
                 // look for it and visit
                 const contractToVisit = contracts.find(c => c.contractName === contractName);
-                const result = findAndRenameCall(contracts, contractToVisit, call);
+                const result = findAndRenameCall(contracts, contractRoot, contractToVisit, variableTypeMap, call);
                 if (result !== undefined) {
                     foundResult = result;
                 }
@@ -277,13 +326,15 @@ function findAndRenameCall(contracts, contractInfo, call) {
  * It looks for overriding methods.
  * @param {object} allContractsData all contracts data
  */
-function renameToSymLinks(allContractsData) {
+function renameToSymLinks(allContractsData, variableTypeMap) {
     allContractsData.forEach((contract) => {
         contract.contract.forEach((contractInfo) => {
             contractInfo.methodCalls.forEach((method) => {
                 // update the call methods
-                method.callMethods = method.callMethods
-                    .map(call => findAndRenameCall(contract.contract, contractInfo, call));
+                method.callMethods = method.callMethods.map((call) => {
+                    call.name = findAndRenameCall(contract.contract, contractInfo, contractInfo, variableTypeMap, call);
+                    return call;
+                });
             });
         });
     });
@@ -293,16 +344,17 @@ function renameToSymLinks(allContractsData) {
 exports.parsing = (solidityFilesPath) => {
     let contractsArray = [];
     // first we process and organize data in order to have a standard
+    const variableTypeMap = new Map();
     solidityFilesPath.forEach((file) => {
         // process data
         const ignoresList = [];
         const contractsList = [];
-        profileData(file, [], ignoresList, contractsList);
+        profileData(file, [], ignoresList, contractsList, variableTypeMap);
         const contract = processData(file, [], ignoresList, contractsList);
         //
         contractsArray.push({ file, contract });
     });
-    contractsArray = renameToSymLinks(contractsArray);
+    contractsArray = renameToSymLinks(contractsArray, variableTypeMap);
     // and then we transform from graphic
     contractsArray.forEach((dataElement) => {
         transformForEdgeBundeling(dataElement.file, dataElement.contract);

@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const Mustache = require('mustache');
 
+const { parsing } = require('./parsing');
 const { walkSync } = require('./utils/utils');
 
 
@@ -399,6 +400,7 @@ exports.generateVisualization = (filePathInput) => {
             //
         }
         // iterate over files to generate HTML
+        parsing(files);
         generateVisualizationForFile(files);
         return 0;
     });
