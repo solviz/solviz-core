@@ -31,8 +31,7 @@ function isKeywordFunction(word) {
 function isCountableStatement(fLink, contractsList, ignoresList) {
     return (!isKeywordFunction(fLink.expression.name)
         && !ignoresList.includes(fLink.expression.name)
-        && !contractsList.includes(fLink.expression.name)
-        && fLink.expression.name !== undefined);
+        && !contractsList.includes(fLink.expression.name));
 }
 
 /**
@@ -47,14 +46,18 @@ function parserFunctionVisitor(contractsList, ignoresList, fDef, callMethods) {
             if (fDef.name !== functionCallNode.expression.name
                 && fDef.body.statements.length > 1
                 && isCountableStatement(functionCallNode, contractsList, ignoresList)) {
-                // and if so, add to a list
-                callMethods.push({ name: functionCallNode.expression.name, args: functionCallNode.arguments });
+                if (functionCallNode.expression.name !== undefined) {
+                    // and if so, add to a list
+                    callMethods.push({ name: functionCallNode.expression.name, args: functionCallNode.arguments });
+                } else if (functionCallNode.expression.type === 'MemberAccess') {
+                    //
+                    callMethods.push({ name: functionCallNode.expression.memberName, args: functionCallNode.arguments });
+                }
             }
         },
         MemberAccess: (functionCallNode) => {
             // sometimes, when calling a member from a library, for example
             if ((functionCallNode.expression.type !== 'Identifier'
-                || contractsList.includes(functionCallNode.expression.name)
                 || functionCallNode.expression.name === 'super')
                 && functionCallNode.expression.type !== 'IndexAccess') {
                 // sometimes, when calling something like
@@ -295,7 +298,7 @@ function findAndRenameCall(contracts, contractRoot, contractInfo, variableTypeMa
     contractInfo.extendsContracts.forEach((extending) => {
         // look for it and visit
         const contractToVisit = contracts.find(c => c.contractName === extending);
-        const result = findAndRenameCall(contracts, contractRoot,contractToVisit, variableTypeMap, call);
+        const result = findAndRenameCall(contracts, contractRoot, contractToVisit, variableTypeMap, call);
         if (result !== undefined) {
             foundResult = result;
         }

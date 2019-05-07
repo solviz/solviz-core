@@ -1,5 +1,5 @@
 
 
 exports.transformForEdgeBundeling = (solidityFile, data) => {
-    console.log(data[data.length - 4].methodCalls[0]);
+    console.log(data[data.length - 2].methodCalls[2]);
 };

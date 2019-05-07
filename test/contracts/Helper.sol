@@ -1,7 +1,7 @@
 pragma solidity ^0.5.0;
 
 import './Data.sol';
-// import './Allow.sol';
+import './Allow.sol';
 
 contract Helper is Data {
 
@@ -18,6 +18,7 @@ contract Helper is Data {
         nft.name = _name;
         nfts[_token] = nft;
         incrementChanges();
-        // allowed[msg.sender] = Allow.updateLimits(getTotalChanges());
+        uint256 total = getTotalChanges();
+        allowed[msg.sender] = Allow.updateLimits(total);
     }
 }
