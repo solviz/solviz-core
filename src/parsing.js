@@ -10,7 +10,11 @@ const { transformForNeural } = require('./graphics/neural');
  * @param {strng} word statement to be verified
  */
 function isKeywordCall(word) {
-    return (word === 'length');
+    const keywords = [
+        'length',
+        'push',
+    ];
+    return keywords.includes(word);
 }
 
 /**
@@ -18,9 +22,20 @@ function isKeywordCall(word) {
  * @param {strng} word statement to be verified
  */
 function isKeywordFunction(word) {
-    return (word === 'require'
-        || word === 'revert'
-        || word === 'assert');
+    const keywords = [
+        'gasleft',
+        'require',
+        'assert',
+        'revert',
+        'addmod',
+        'mulmod',
+        'keccak256',
+        'sha256',
+        'sha3',
+        'ripemd160',
+        'ecrecover',
+    ];
+    return keywords.includes(word);
 }
 
 /**
@@ -49,8 +64,10 @@ function parserFunctionVisitor(contractsList, ignoresList, fDef, callMethods) {
                 if (functionCallNode.expression.name !== undefined) {
                     // and if so, add to a list
                     callMethods.push({ name: functionCallNode.expression.name, args: functionCallNode.arguments });
-                } else if (functionCallNode.expression.type === 'MemberAccess') {
-                    //
+                } else if (functionCallNode.expression.type === 'MemberAccess'
+                    && functionCallNode.expression.memberName !== undefined
+                    && !isKeywordCall(functionCallNode.expression.memberName)) {
+                    // add a member call
                     callMethods.push({ name: functionCallNode.expression.memberName, args: functionCallNode.arguments });
                 }
             }
@@ -346,6 +363,7 @@ function renameToSymLinks(allContractsData, variableTypeMap) {
 
 exports.parsing = (solidityFilesPath) => {
     let contractsArray = [];
+    const parsedResult = [];
     // first we process and organize data in order to have a standard
     const variableTypeMap = new Map();
     solidityFilesPath.forEach((file) => {
@@ -360,7 +378,9 @@ exports.parsing = (solidityFilesPath) => {
     contractsArray = renameToSymLinks(contractsArray, variableTypeMap);
     // and then we transform from graphic
     contractsArray.forEach((dataElement) => {
-        transformForEdgeBundeling(dataElement.file, dataElement.contract);
-        transformForNeural(dataElement.file, dataElement.contract);
+        const edge = transformForEdgeBundeling(dataElement.file, dataElement.contract);
+        const neural = transformForNeural(dataElement.file, dataElement.contract);
+        parsedResult.push({ file: dataElement.file, edge, neural });
     });
+    return parsedResult;
 };
