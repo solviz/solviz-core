@@ -37,7 +37,7 @@ exports.transformForEdgeBundeling = (solidityFile, data) => {
             call.callMethods.forEach((method) => {
                 imports.push(method.name);
             });
-            result.push({ name: call.functionDefinition, imports });
+            result.push({ name: call.functionDefinition, size: 3938, imports });
         });
     });
     // clean lonely methods
