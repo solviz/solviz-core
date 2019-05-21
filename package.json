@@ -22,14 +22,14 @@
     },
     "homepage": "https://github.com/obernardovieira/solvis#readme",
     "dependencies": {
-        "meow": "^5.0.0",
-        "solidity-parser-antlr": "^0.4.2",
-        "mustache": "^3.0.1"
+        "meow": "5.0.0",
+        "solidity-parser-antlr": "0.4.2",
+        "mustache": "3.0.1"
     },
     "devDependencies": {
-        "eslint": "^5.16.0",
-        "eslint-config-airbnb-base": "^13.1.0",
-        "eslint-plugin-import": "^2.16.0",
+        "eslint": "5.16.0",
+        "eslint-config-airbnb-base": "13.1.0",
+        "eslint-plugin-import": "2.16.0",
         "openzeppelin-solidity": "2.2.0"
     }
 }
