@@ -7,7 +7,7 @@
         "solvis": "bin/cli.js"
     },
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
+        "test": "mocha",
         "demo": "./bin/cli.js test/contracts/MyNFT.sol"
     },
     "repository": {
@@ -22,14 +22,16 @@
     },
     "homepage": "https://github.com/obernardovieira/solvis#readme",
     "dependencies": {
+        "chai": "4.2.0",
         "meow": "5.0.0",
-        "solidity-parser-antlr": "0.4.2",
-        "mustache": "3.0.1"
+        "mustache": "3.0.1",
+        "solidity-parser-antlr": "0.4.2"
     },
     "devDependencies": {
         "eslint": "5.16.0",
         "eslint-config-airbnb-base": "13.1.0",
         "eslint-plugin-import": "2.16.0",
+        "mocha": "6.1.4",
         "openzeppelin-solidity": "2.2.0"
     }
 }
