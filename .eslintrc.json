@@ -3,7 +3,8 @@
         "commonjs": true,
         "es6": true,
         "node": true,
-        "browser": true
+        "browser": true,
+        "mocha": true
     },
     "extends": "airbnb-base",
     "parserOptions": {
@@ -22,6 +23,6 @@
             "error",
             4
         ],
-        "no-param-reassign": 0 
+        "no-param-reassign": 0
     }
 }
