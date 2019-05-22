@@ -341,14 +341,14 @@ function transformTemplate(templateFile, allGraphsData) {
  * Generate a edge bundling graphic to one specific contract
  * @param solidityFile file path of a file
  */
-function generateVisualizationForFile(solidityFile) {
+function generateVisualizationForFile(solidityFile, parsedData) {
     // get current path folder
     const currentFolder = path.join(__dirname, '../');
     // starting
     const allGraphsData = [];
     solidityFile.forEach((file) => {
-        // get filename
-        const filename = file.match(/\/([a-zA-Z0-9_]+)\.sol/);
+        const contractName = (file.match(/\/([a-zA-Z0-9_]+)\.sol/))[1];
+        /* // get filename
         // get contract name (should be the same as filename?)
         const contractName = filename[1];
         let graphData = { edge: [], neural: { nodes: [], links: [] } };
@@ -358,9 +358,11 @@ function generateVisualizationForFile(solidityFile) {
         profileData(file, [], ignoresList, contractsList);
         processData(file, graphData, [], ignoresList, contractsList);
         // well...
-        graphData = lookForLonelyFunctions(graphData);
+        graphData = lookForLonelyFunctions(graphData); */
+        const parsed = parsedData.find(data => data.file === file);
+        // console.log(parsed);
         // add data to the json
-        allGraphsData.push({ name: contractName, dataEdge: graphData.edge, dataNeural: graphData.neural });
+        allGraphsData.push({ name: contractName, dataEdge: parsed.edge, dataNeural: parsed.neural });
     });
     // transform the template
     const HTMLContent = transformTemplate(
@@ -400,8 +402,9 @@ exports.generateVisualization = (filePathInput) => {
             //
         }
         // iterate over files to generate HTML
-        parsing(files);
-        generateVisualizationForFile(files);
+        const parsedData = parsing(files);
+        // console.log(parsedData[0].neural);
+        generateVisualizationForFile(files, parsedData);
         return 0;
     });
 };
