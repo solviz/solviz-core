@@ -179,7 +179,8 @@ function processData(solidityFile, importVisited, ignoresList, contractsList) {
     // then visit the not yet visited node according to "extends" order
     parser.visit(ast, {
         InheritanceSpecifier: (node) => {
-            const nodePath = importList.filter(imp => imp.indexOf(node.baseName.namePath) > -1)[0];
+            const nodePath = importList
+                .filter(imp => imp.indexOf(node.baseName.namePath.toLowerCase()) > -1)[0];
             if (!importVisited.includes(nodePath)) {
                 importVisited.push(nodePath);
                 const result = processData(
