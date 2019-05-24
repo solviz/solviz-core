@@ -317,7 +317,7 @@ function findAndRenameCall(contracts, contractRoot, contractInfo, variableTypeMa
     // otherwise, let's look in parent contracts
     contractInfo.extendsContracts.forEach((extending) => {
         // look for it and visit
-        const contractToVisit = contracts.find(c => c.contractName === extending);
+        const contractToVisit = contracts.find(c => c.contractName.toLowerCase() === extending.toLowerCase());
         const result = findAndRenameCall(contracts, contractRoot, contractToVisit, variableTypeMap, call);
         if (result !== undefined) {
             foundResult = result;
@@ -332,7 +332,7 @@ function findAndRenameCall(contracts, contractRoot, contractInfo, variableTypeMa
             // and if it's not in import list
             if (!contractInfo.extendsContracts.includes(contractName)) {
                 // look for it and visit
-                const contractToVisit = contracts.find(c => c.contractName === contractName);
+                const contractToVisit = contracts.find(c => c.contractName.toLowerCase() === contractName.toLowerCase());
                 const result = findAndRenameCall(contracts, contractRoot, contractToVisit, variableTypeMap, call);
                 if (result !== undefined) {
                     foundResult = result;
@@ -379,9 +379,11 @@ exports.parsing = (solidityFilesPath) => {
         // then process it accordingly
         const contract = processData(file, [], ignoresList, contractsList, functionVariables);
         // and in this last step, append the missing variables, catched with functionDefinition
-        const tmpVarMap = variableTypeMap.get(contract[0].contractName);
-        functionVariables.forEach((value, key) => tmpVarMap.set(key, value));
-        variableTypeMap.set(contract.contractName, tmpVarMap);
+        contract.forEach((c) => {
+            const tmpVarMap = variableTypeMap.get(c.contractName);
+            functionVariables.forEach((value, key) => tmpVarMap.set(key, value));
+            variableTypeMap.set(c.contractName, tmpVarMap);
+        });
         //
         contractsArray.push({ file, contract });
     });
