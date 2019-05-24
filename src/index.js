@@ -1,4 +1,3 @@
-const parser = require('solidity-parser-antlr');
 const path = require('path');
 const fs = require('fs');
 const Mustache = require('mustache');
@@ -12,311 +11,6 @@ const { walkSync } = require('./utils/utils');
 Array.prototype.flatMap = function (selector) {
     return this.reduce((prev, next) => (/* first */ selector(prev) || /* all after first */ prev).concat(selector(next)));
 };
-
-/**
- * Given a word, verifies if it's one from Solidity keyword calls
- * @param {strng} word statement to be verified
- */
-function isKeywordCall(word) {
-    return (word === 'length');
-}
-
-/**
- * Given word, verifies if it's one from Solidity keyword functions
- * @param {strng} word statement to be verified
- */
-function isKeywordFunction(word) {
-    return (word === 'require'
-        || word === 'revert'
-        || word === 'assert');
-}
-
-/**
- * Given a function object and a ignored list, validates it
- * @param {object} fLink the function object parsed
- * @param {array} ignoresList a list of ignored function calls
- */
-function isCountableStatement(fLink, contractsList, ignoresList) {
-    return (!isKeywordFunction(fLink.expression.name)
-        && !ignoresList.includes(fLink.expression.name)
-        && !contractsList.includes(fLink.expression.name)
-        && fLink.expression.name !== undefined);
-}
-
-/**
- * Function containing parse methods used in parser.visit
- */
-function parserFunctionVisitor(contractsList, ignoresList, fDef, callMethods, graphData, contractName) {
-    return {
-        FunctionCall: (functionCallNode) => {
-            // in order to avoid override methods that only call the base method
-            // let's verify if the expressions is different than the function
-            // and if it's not the only one
-            if (fDef.name !== functionCallNode.expression.name
-                && fDef.body.statements.length > 1
-                && isCountableStatement(functionCallNode, contractsList, ignoresList)) {
-                // and if so, add to a list
-                callMethods.push(functionCallNode.expression.name);
-                // links should be added with a proper id
-                const idNode = graphData.neural.nodes.find(
-                    n => n.method === functionCallNode.expression.name && n.contract === contractName,
-                );
-                if (idNode !== undefined) {
-                    graphData.neural.links.push({
-                        source: fDef.name + contractName,
-                        target: idNode.method + idNode.contract,
-                        value: 1,
-                    });
-                }
-            }
-        },
-        MemberAccess: (functionCallNode) => {
-            // sometimes, when calling a member from a library, for example
-            if ((functionCallNode.expression.type !== 'Identifier'
-                || contractsList.includes(functionCallNode.expression.name)
-                || functionCallNode.expression.name === 'super')
-                && functionCallNode.expression.type !== 'IndexAccess') {
-                // sometimes, when calling something like
-                // bytes(_tokenURIs[tokenId]).length it returns as a FunctionCall and then
-                // functionCallNode.memberName turns to be "length"
-                // So, in order to prevent it, let's do one last check
-                if (isKeywordCall(functionCallNode.memberName)) {
-                    return;
-                }
-                // and if so, add to a list
-                callMethods.push(functionCallNode.memberName);
-                // links should be added with a proper id
-                const idNode = graphData.neural.nodes.find(
-                    n => n.method === functionCallNode.memberName && n.contract === contractName,
-                );
-                if (idNode !== undefined) {
-                    graphData.neural.links.push({
-                        source: fDef.name + contractName,
-                        target: idNode.method + idNode.contract,
-                        value: 1,
-                    });
-                }
-            }
-        },
-    };
-}
-
-/**
- * Gets event definitions, structs and contract names
- * in order to process data with properly information
- * @param {string} solidityFile solidity file path
- * @param {array} importVisited list of visited contracts
- * @param {array} ignoresList list of ignored calls
- * @param {array} contractsList list of contracts names
- */
-function profileData(solidityFile, importVisited, ignoresList, contractsList) {
-    // read file
-    const input = fs.readFileSync(solidityFile).toString();
-    // parse it using solidity-parser-antlr
-    const ast = parser.parse(input);
-    // first, we need to collect nodes to be ignored
-    parser.visit(ast, {
-        EventDefinition: (node) => {
-            // since events are also assumed has a function call
-            // let's list them and ignore.
-            ignoresList.push(node.name);
-        },
-        StructDefinition: (node) => {
-            // since struct constructor are also assumed has a function call
-            // let's list them and ignore.
-            ignoresList.push(node.name);
-        },
-        ContractDefinition: (node) => {
-            // also, we want to allow only member access
-            // of contracts to be listed
-            contractsList.push(node.name);
-        },
-        ImportDirective: (node) => {
-            // if, at any chance :joy: it inherits from another contract, then visit it
-            let nodePath;
-            // depending on the import type, build the path
-            if (node.path[0] === '.') {
-                nodePath = path.join(path.join(solidityFile, '../'), node.path);
-            } else {
-                nodePath = path.join(path.join(process.cwd(), 'node_modules'), node.path);
-            }
-            if (!importVisited.includes(nodePath)) {
-                importVisited.push(nodePath);
-                profileData(
-                    nodePath, importVisited, ignoresList, contractsList,
-                );
-            }
-        },
-    });
-}
-
-/**
- * Parses the contract and organizes the data to make ready
- * to put in the graphic. This method is recursive
- * to support inheritance.
- * @param {string} solidityFile solidity file path
- * @param {object} graphData data to be given to D3 to render
- * @param {array} importVisited list of visited contracts
- * @param {array} ignoresList list of ignored calls
- * @param {array} contractsList list of contracts names
- */
-function processData(solidityFile, graphData, importVisited, ignoresList, contractsList) {
-    let contractName;
-    const importList = [];
-    // read file
-    const input = fs.readFileSync(solidityFile).toString();
-    // parse it using solidity-parser-antlr
-    const ast = parser.parse(input);
-    // and then navigate though all subnodes
-    // it might look weird, but the reason to have separated each call in a new parse.visit
-    // is because this definition are not called in this code order and instead called
-    // in the order defined on the parser package
-    // first we get the contract name and imports, the order is not relevant here
-    parser.visit(ast, {
-        ContractDefinition: (node) => {
-            contractName = node.name;
-        },
-        ImportDirective: (node) => {
-            // if, at any chance :joy: it inherits from another contract, then visit it
-            let nodePath;
-            // depending on the import type, build the path
-            if (node.path[0] === '.') {
-                nodePath = path.join(path.join(solidityFile, '../'), node.path);
-            } else {
-                nodePath = path.join(path.join(process.cwd(), 'node_modules'), node.path);
-            }
-            importList.push(nodePath);
-        },
-    });
-    // then we navigate through all function definition
-    // one of them might be a constructor and in case it calls other constructor
-    // let's navigate through them
-    parser.visit(ast, {
-        FunctionDefinition: (fDef) => {
-            // verify if they are functions and
-            // if the node's body is empty (in case it's just a definition)
-            if (fDef.isConstructor === true) {
-                fDef.modifiers.forEach((modifier) => {
-                    const nodePath = importList.filter(imp => imp.indexOf(modifier.name) > -1)[0];
-                    if (!importVisited.includes(nodePath)) {
-                        importVisited.push(nodePath);
-                        processData(
-                            nodePath, graphData, importVisited, ignoresList, contractsList,
-                        );
-                    }
-                });
-            } else {
-                // call methods
-                const callMethods = [];
-                if (fDef.body !== null) {
-                    // some functions have empty bodies (like definitions)
-                    // let's not visit them
-                    // navigate through everything happening inside that function
-                    parser.visit(fDef,
-                        parserFunctionVisitor(contractsList, ignoresList, fDef, callMethods, graphData, contractName));
-                }
-                // and if so, add to a list
-                graphData.neural.nodes.push({ id: fDef.name + contractName, method: fDef.name, contract: contractName });
-                // since it starts from the ground up, every method that appears again is probably
-                // an overrided method, so let's override it as well.
-                const edgeIndex = graphData.edge.indexOf(graphData.edge.find(funcName => funcName.name === fDef.name));
-                const superCall = callMethods.indexOf(fDef.name);
-                // remove duplicated
-                const cleanCallMethods = callMethods.filter((e, p) => callMethods.indexOf(e) === p);
-                if (edgeIndex !== -1) {
-                    if (superCall !== -1) {
-                        cleanCallMethods[superCall] = graphData.edge[edgeIndex].imports;
-                        graphData.edge[edgeIndex].imports = cleanCallMethods.flatMap(i => i);
-                    } else {
-                        graphData.edge[edgeIndex] = {
-                            name: fDef.name,
-                            size: 3938,
-                            imports: cleanCallMethods,
-                        };
-                    }
-                } else {
-                    graphData.edge.push({
-                        name: fDef.name,
-                        size: 3938,
-                        imports: cleanCallMethods,
-                    });
-                }
-            }
-        },
-    });
-    // then visit the not yet visited node according to "extends" order
-    parser.visit(ast, {
-        InheritanceSpecifier: (node) => {
-            const nodePath = importList.filter(imp => imp.indexOf(node.baseName.namePath) > -1)[0];
-            if (!importVisited.includes(nodePath)) {
-                importVisited.push(nodePath);
-                processData(
-                    nodePath, graphData, importVisited, ignoresList, contractsList,
-                );
-            }
-        },
-    });
-    // in the end, visit the imports that were not visited yet
-    // only visit if it was not visited. Used to ignore ciclyc calls
-    importList.forEach((nodePath) => {
-        if (importVisited.includes(nodePath)) {
-            return;
-        }
-        importVisited.push(nodePath);
-        processData(
-            nodePath, graphData, importVisited, ignoresList, contractsList,
-        );
-    });
-    //
-    return graphData;
-}
-
-/**
- * Remove links that does not have a connection
- * @param graphData complete graph data ready to use in graph visualization
- */
-function lookForLonelyFunctions(graphData) {
-    // lets assume, every function is lonely, meaning, no connections
-    // if we find that function anywhere, lets add it to the list
-    let nodesToRemove = [];
-    const result = { edge: [], neural: { nodes: [], links: [] } };
-    // we need to apply different clean methods for each graphic
-    // let's start by cleaning edge bundeling
-    graphData.edge.forEach((node) => {
-        if (node.imports.length === 0) {
-            // if it does not import anything, see if it's imported somewhere
-            const totalImports = graphData.edge.find(is => is.imports.includes(node.name));
-            if (totalImports === undefined) {
-                nodesToRemove.push(node.name);
-            }
-        }
-    });
-    // removed not linked nodes
-    result.edge = graphData.edge.filter(node => !nodesToRemove.includes(node.name));
-    // do the same for neural visualization
-    nodesToRemove = [];
-    // remove duplicated nodes
-    const cleanNodes = [];
-    const uCleanNodes = [];
-    graphData.neural.nodes.forEach((node) => {
-        const uNode = node.id + node.contract;
-        if (!uCleanNodes.includes(uNode)) {
-            uCleanNodes.push(uNode);
-            cleanNodes.push(node);
-        }
-    });
-    graphData.neural.nodes = cleanNodes;
-    // if a node is not a source nor a target, then remove it
-    graphData.neural.nodes.forEach((node) => {
-        const totalImports = graphData.neural.links.filter(is => is.source === node.id || is.target === node.id);
-        if (totalImports === undefined || totalImports.length === 0) {
-            nodesToRemove.push(node.id);
-        }
-    });
-    result.neural.nodes = graphData.neural.nodes.filter(node => !nodesToRemove.includes(node.id));
-    result.neural.links = graphData.neural.links;
-    return result;
-}
 
 /**
  * Given the input data, run the render engine to generate a page
@@ -347,20 +41,10 @@ function generateVisualizationForFile(solidityFile, parsedData) {
     // starting
     const allGraphsData = [];
     solidityFile.forEach((file) => {
+        // TODO: get the real ontract name
         const contractName = (file.match(/\/([a-zA-Z0-9_]+)\.sol/))[1];
-        /* // get filename
-        // get contract name (should be the same as filename?)
-        const contractName = filename[1];
-        let graphData = { edge: [], neural: { nodes: [], links: [] } };
-        // process data
-        const ignoresList = [];
-        const contractsList = [];
-        profileData(file, [], ignoresList, contractsList);
-        processData(file, graphData, [], ignoresList, contractsList);
         // well...
-        graphData = lookForLonelyFunctions(graphData); */
         const parsed = parsedData.find(data => data.file === file);
-        // console.log(parsed);
         // add data to the json
         allGraphsData.push({ name: contractName, dataEdge: parsed.edge, dataNeural: parsed.neural });
     });
@@ -386,6 +70,7 @@ exports.generateVisualization = (filePathInput) => {
     fs.lstat(filePathInput, (err, stats) => {
         // Handle error
         if (err) {
+            console.error(err);
             return 1;
         }
         const files = [];
@@ -403,7 +88,6 @@ exports.generateVisualization = (filePathInput) => {
         }
         // iterate over files to generate HTML
         const parsedData = parsing(files);
-        // console.log(parsedData[0].neural);
         generateVisualizationForFile(files, parsedData);
         return 0;
     });
