@@ -106,7 +106,7 @@ function parserFunctionVisitor(contractsList, ignoresList, fDef, callMethods) {
  * @param {array} ignoresList list of ignored calls
  * @param {array} contractsList list of contracts names
  */
-function processData(solidityFile, importVisited, ignoresList, contractsList) {
+function processData(solidityFile, importVisited, ignoresList, contractsList, variableTypeMap) {
     let contractName;
     const methodCalls = [];
     const importList = [];
@@ -150,7 +150,7 @@ function processData(solidityFile, importVisited, ignoresList, contractsList) {
                     if (!importVisited.includes(nodePath)) {
                         importVisited.push(nodePath);
                         const result = processData(
-                            nodePath, importVisited, ignoresList, contractsList,
+                            nodePath, importVisited, ignoresList, contractsList, variableTypeMap,
                         );
                         result.forEach(i => processed.push(i));
                     }
@@ -170,6 +170,8 @@ function processData(solidityFile, importVisited, ignoresList, contractsList) {
                 fDef.parameters.parameters.forEach((p) => {
                     functionDefinition += `:${(p.typeName.name === undefined)
                         ? (p.typeName.namePath) : (p.typeName.name)}`;
+                    // also, add this variable to the map
+                    variableTypeMap.set(p.name, p);
                 });
                 // and if so, add to a list
                 methodCalls.push({ functionName: fDef.name, functionDefinition, callMethods });
@@ -184,7 +186,7 @@ function processData(solidityFile, importVisited, ignoresList, contractsList) {
             if (!importVisited.includes(nodePath)) {
                 importVisited.push(nodePath);
                 const result = processData(
-                    nodePath, importVisited, ignoresList, contractsList,
+                    nodePath, importVisited, ignoresList, contractsList, variableTypeMap,
                 );
                 result.forEach(i => processed.push(i));
             }
@@ -199,7 +201,7 @@ function processData(solidityFile, importVisited, ignoresList, contractsList) {
         }
         importVisited.push(nodePath);
         const result = processData(
-            nodePath, importVisited, ignoresList, contractsList,
+            nodePath, importVisited, ignoresList, contractsList, variableTypeMap,
         );
         result.forEach(i => processed.push(i));
     });
@@ -371,8 +373,15 @@ exports.parsing = (solidityFilesPath) => {
         // process data
         const ignoresList = [];
         const contractsList = [];
+        const functionVariables = new Map();
+        // profile information into different arrays and mapping
         profileData(file, [], ignoresList, contractsList, variableTypeMap);
-        const contract = processData(file, [], ignoresList, contractsList);
+        // then process it accordingly
+        const contract = processData(file, [], ignoresList, contractsList, functionVariables);
+        // and in this last step, append the missing variables, catched with functionDefinition
+        const tmpVarMap = variableTypeMap.get(contract[0].contractName);
+        functionVariables.forEach((value, key) => tmpVarMap.set(key, value));
+        variableTypeMap.set(contract.contractName, tmpVarMap);
         //
         contractsArray.push({ file, contract });
     });
