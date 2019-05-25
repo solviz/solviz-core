@@ -18,7 +18,7 @@ function packageHierarchy(classes) {
     }
 
     classes.forEach((d) => {
-        find(d.name, d);
+        find(d.id, d);
     });
 
     return d3.hierarchy(map['']);
