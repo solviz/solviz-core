@@ -50,15 +50,19 @@ function generateVisualizationForFile(solidityFile, parsedData) {
     });
     // transform the template
     const HTMLContent = transformTemplate(
-        `${currentFolder}src/template/index.html`, allGraphsData,
+        path.join(currentFolder, 'src/template/index.html'), allGraphsData,
     );
+    if (!fs.existsSync(path.join(process.cwd(), 'docs'))) {
+        fs.mkdirSync(path.join(process.cwd(), 'docs'));
+    }
     // save all data in another file
-    fs.writeFileSync(`${process.cwd()}/docs/data.js`, `var allGraphsData=${JSON.stringify(allGraphsData)}`);
+    fs.writeFileSync(path.join(process.cwd(), 'docs/data.js'), `var allGraphsData=${JSON.stringify(allGraphsData)}`);
     // write it to a file
-    fs.writeFileSync(`${process.cwd()}/docs/index.html`, HTMLContent);
+    fs.writeFileSync(path.join(process.cwd(), 'docs/index.html'), HTMLContent);
     // copy script that generates graphic
-    fs.copyFileSync(`${currentFolder}src/template/edgebundling.js`, `${process.cwd()}/docs/edgebundling.js`);
-    fs.copyFileSync(`${currentFolder}src/template/neural.js`, `${process.cwd()}/docs/neural.js`);
+    fs.copyFileSync(path.join(process.cwd(), 'src/template/edgebundling.js'),
+        path.join(process.cwd(), 'docs/edgebundling.js'));
+    fs.copyFileSync(path.join(process.cwd(), 'src/template/neural.js'), path.join(process.cwd(), 'docs/neural.js'));
 }
 
 /**
