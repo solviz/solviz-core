@@ -358,6 +358,17 @@ function findAndRenameCall(contracts, contractRoot, contractInfo, variableTypeMa
                         functionDefinition += ':address';
                     } else if (p.memberName === 'value') {
                         functionDefinition += ':uint256';
+                    } else {
+                        // but there's an exception. When a variable is within a struct...
+                        const totalVariables = variableTypeMap.size;
+                        const iterator1 = variableTypeMap.values();
+                        for (let t = 0; t < totalVariables; t += 1) {
+                            const result = iterator1.next().value.get(p.memberName);
+                            if (result !== undefined) {
+                                functionDefinition += `:${result.typeName.name}`;
+                                break;
+                            }
+                        }
                     }
                 }
             });
