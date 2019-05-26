@@ -68,9 +68,9 @@ function colorLink(src) {
 
 // eslint-disable-next-line no-unused-vars
 function renderEdgeBundlingVisualization(classes) {
-    const diameter = 500;
+    const diameter = 700;
     const radius = diameter / 2;
-    const innerRadius = radius - 120;
+    const innerRadius = radius - 220;
 
     const cluster = d3.cluster()
         .size([360, innerRadius]);
