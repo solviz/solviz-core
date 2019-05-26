@@ -8,11 +8,15 @@ contract SiringClockAuction is ClockAuction {
 
     // @dev Sanity check that allows us to ensure that we are pointing to the
     //  right auction in our setSiringAuctionAddress() call.
-    bool public isSiringClockAuction = true;
+    bool private isSiringClockAuctionV = true;
 
     // Delegate constructor
     constructor(address _nftAddr, uint256 _cut) public
         ClockAuction(_nftAddr, _cut) {}
+
+    function isSiringClockAuction() public view returns(bool) {
+        return isSiringClockAuctionV;
+    }
 
     /// @dev Creates and begins a new auction. Since this function is wrapped,
     /// require sender to be KittyCore contract.

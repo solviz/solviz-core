@@ -120,7 +120,7 @@ contract KittyAuction is KittyBreeding {
         require(msg.value >= currentPrice + autoBirthFee, "");
 
         // Siring auction will throw if the bid fails.
-        siringAuction.bid.value(msg.value - autoBirthFee)(_sireId);
+        // siringAuction.bid.value(msg.value - autoBirthFee)(_sireId);
         _breedWith(_matronId, _sireId);
     }
 

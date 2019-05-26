@@ -8,7 +8,7 @@ contract SaleClockAuction is ClockAuction {
 
     // @dev Sanity check that allows us to ensure that we are pointing to the
     //  right auction in our setSaleAuctionAddress() call.
-    bool public isSaleClockAuction = true;
+    bool private isSaleClockAuctionV = true;
 
     // Tracks last 5 sale price of gen0 kitty sales
     uint256 public gen0SaleCount;
@@ -17,6 +17,11 @@ contract SaleClockAuction is ClockAuction {
     // Delegate constructor
     constructor(address _nftAddr, uint256 _cut) public
         ClockAuction(_nftAddr, _cut) {}
+
+
+    function isSaleClockAuction() public view returns(bool) {
+        return isSaleClockAuctionV;
+    }
 
     /// @dev Creates and begins a new auction.
     /// @param _tokenId - ID of token to auction, sender must be owner.

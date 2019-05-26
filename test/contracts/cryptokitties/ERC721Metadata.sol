@@ -4,7 +4,7 @@ pragma solidity ^0.5.8;
 ///  it has one function that will return the data as bytes.
 contract ERC721Metadata {
     /// @dev Given a token Id, returns a byte array that is supposed to be converted into string.
-    function getMetadata(uint256 _tokenId, string memory) public pure returns (bytes32[4] memory buffer, uint256 count) {
+    function getMetadata(uint256 _tokenId, string memory _rMetadata) public pure returns (bytes32[4] memory buffer, uint256 count) {
         if (_tokenId == 1) {
             buffer[0] = "Hello World! :D";
             count = 15;
