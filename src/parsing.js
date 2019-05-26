@@ -441,11 +441,9 @@ exports.parsing = (solidityFilesPath) => {
         // then process it accordingly
         const contract = processData(file, [], ignoresList, contractsList, methodsUseFor, functionVariables);
         // and in this last step, append the missing variables, catched with functionDefinition
-        contract.forEach((c) => {
-            const tmpVarMap = variableTypeMap.get(c.contractName);
-            functionVariables.forEach((value, key) => tmpVarMap.set(key, value));
-            variableTypeMap.set(c.contractName, tmpVarMap);
-        });
+        const tmpVarMap = variableTypeMap.get(contract[0].contractName);
+        functionVariables.forEach((value, key) => tmpVarMap.set(key, value));
+        variableTypeMap.set(contract[0].contractName, tmpVarMap);
         //
         contractsArray.push({ file, contract });
     });
