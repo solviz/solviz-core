@@ -24,6 +24,9 @@ As it is still under development
 
 ## Installation and usage
 
+**NOTE**: Since there isn't any released version yet, the commands below doesn't work yet. To see the graphic of the image of to, you can run `npm run demo`.
+We are hardly planning the release.
+
 ```bash
 # Move to your project folder.
 cd project-folder/
