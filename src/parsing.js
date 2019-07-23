@@ -72,7 +72,7 @@ function parserFunctionVisitor(contractsList, ignoresList, fDef, methodsUseFor, 
                     && !isKeywordCall(functionCallNode.expression.memberName)) {
                     // verify if it is a 'using for' method
                     const methodArguments = functionCallNode.arguments;
-                    methodsUseFor.forEach((v, k) => {
+                    methodsUseFor.forEach((v) => {
                         const isValid = v
                             .find(m => m.name.toLowerCase() === functionCallNode.expression.memberName.toLowerCase());
                         if (isValid !== undefined) {

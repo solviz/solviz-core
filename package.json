@@ -8,6 +8,7 @@
     },
     "scripts": {
         "test": "mocha",
+        "lint": "eslint src/*.js src/graphics/*.js",
         "demo": "./bin/cli.js test/contracts/cryptokitties/KittyCore.sol"
     },
     "repository": {
