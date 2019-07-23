@@ -1,0 +1,926 @@
+[
+    {
+        "file": "./test/contracts/cryptokitties/KittyBreeding.sol",
+        "edge": [
+            {
+                "id": "ClockAuctionBase -> _owns",
+                "name": "ClockAuctionBase:_owns:address:uint256",
+                "size": 3938,
+                "imports": []
+            },
+            {
+                "id": "ClockAuctionBase -> _escrow",
+                "name": "ClockAuctionBase:_escrow:address:uint256",
+                "size": 3938,
+                "imports": []
+            },
+            {
+                "id": "ClockAuctionBase -> _transfer",
+                "name": "ClockAuctionBase:_transfer:address:uint256",
+                "size": 3938,
+                "imports": []
+            },
+            {
+                "id": "ClockAuctionBase -> _addAuction",
+                "name": "ClockAuctionBase:_addAuction:uint256:Auction",
+                "size": 3938,
+                "imports": []
+            },
+            {
+                "id": "ClockAuctionBase -> _cancelAuction",
+                "name": "ClockAuctionBase:_cancelAuction:uint256:address",
+                "size": 3938,
+                "imports": [
+                    "ClockAuctionBase:_removeAuction:uint256",
+                    "ClockAuctionBase:_transfer:address:uint256"
+                ]
+            },
+            {
+                "id": "ClockAuctionBase -> _bid",
+                "name": "ClockAuctionBase:_bid:uint256:uint256",
+                "size": 3938,
+                "imports": [
+                    "ClockAuctionBase:_isOnAuction:Auction",
+                    "ClockAuctionBase:_currentPrice:Auction",
+                    "ClockAuctionBase:_removeAuction:uint256",
+                    "ClockAuctionBase:_computeCut:uint256"
+                ]
+            },
+            {
+                "id": "ClockAuctionBase -> _removeAuction",
+                "name": "ClockAuctionBase:_removeAuction:uint256",
+                "size": 3938,
+                "imports": []
+            },
+            {
+                "id": "ClockAuctionBase -> _isOnAuction",
+                "name": "ClockAuctionBase:_isOnAuction:Auction",
+                "size": 3938,
+                "imports": []
+            },
+            {
+                "id": "ClockAuctionBase -> _currentPrice",
+                "name": "ClockAuctionBase:_currentPrice:Auction",
+                "size": 3938,
+                "imports": [
+                    "ClockAuctionBase:_computeCurrentPrice:uint256:uint256:uint256:uint256"
+                ]
+            },
+            {
+                "id": "ClockAuctionBase -> _computeCurrentPrice",
+                "name": "ClockAuctionBase:_computeCurrentPrice:uint256:uint256:uint256:uint256",
+                "size": 3938,
+                "imports": []
+            },
+            {
+                "id": "ClockAuctionBase -> _computeCut",
+                "name": "ClockAuctionBase:_computeCut:uint256",
+                "size": 3938,
+                "imports": []
+            },
+            {
+                "id": "ClockAuction -> createAuction",
+                "name": "ClockAuction:createAuction:uint256:uint256:uint256:uint256:address",
+                "size": 3938,
+                "imports": [
+                    "ClockAuctionBase:_owns:address:uint256",
+                    "ClockAuctionBase:_escrow:address:uint256",
+                    "ClockAuctionBase:_addAuction:uint256:Auction"
+                ]
+            },
+            {
+                "id": "ClockAuction -> bid",
+                "name": "ClockAuction:bid:uint256",
+                "size": 3938,
+                "imports": [
+                    "ClockAuctionBase:_bid:uint256:uint256",
+                    "ClockAuctionBase:_transfer:address:uint256"
+                ]
+            },
+            {
+                "id": "ClockAuction -> cancelAuction",
+                "name": "ClockAuction:cancelAuction:uint256",
+                "size": 3938,
+                "imports": [
+                    "ClockAuctionBase:_isOnAuction:Auction",
+                    "ClockAuctionBase:_cancelAuction:uint256:address"
+                ]
+            },
+            {
+                "id": "ClockAuction -> cancelAuctionWhenPaused",
+                "name": "ClockAuction:cancelAuctionWhenPaused:uint256",
+                "size": 3938,
+                "imports": [
+                    "ClockAuctionBase:_isOnAuction:Auction",
+                    "ClockAuctionBase:_cancelAuction:uint256:address"
+                ]
+            },
+            {
+                "id": "ClockAuction -> getAuction",
+                "name": "ClockAuction:getAuction:uint256",
+                "size": 3938,
+                "imports": [
+                    "ClockAuctionBase:_isOnAuction:Auction"
+                ]
+            },
+            {
+                "id": "ClockAuction -> getCurrentPrice",
+                "name": "ClockAuction:getCurrentPrice:uint256",
+                "size": 3938,
+                "imports": [
+                    "ClockAuctionBase:_isOnAuction:Auction",
+                    "ClockAuctionBase:_currentPrice:Auction"
+                ]
+            },
+            {
+                "id": "SaleClockAuction -> createAuction",
+                "name": "SaleClockAuction:createAuction:uint256:uint256:uint256:uint256:address",
+                "size": 3938,
+                "imports": [
+                    "ClockAuctionBase:_escrow:address:uint256",
+                    "ClockAuctionBase:_addAuction:uint256:Auction"
+                ]
+            },
+            {
+                "id": "SaleClockAuction -> bid",
+                "name": "SaleClockAuction:bid:uint256",
+                "size": 3938,
+                "imports": [
+                    "ClockAuctionBase:_bid:uint256:uint256",
+                    "ClockAuctionBase:_transfer:address:uint256"
+                ]
+            },
+            {
+                "id": "SiringClockAuction -> createAuction",
+                "name": "SiringClockAuction:createAuction:uint256:uint256:uint256:uint256:address",
+                "size": 3938,
+                "imports": [
+                    "ClockAuctionBase:_escrow:address:uint256",
+                    "ClockAuctionBase:_addAuction:uint256:Auction"
+                ]
+            },
+            {
+                "id": "SiringClockAuction -> bid",
+                "name": "SiringClockAuction:bid:uint256",
+                "size": 3938,
+                "imports": [
+                    "ClockAuctionBase:_bid:uint256:uint256",
+                    "ClockAuctionBase:_transfer:address:uint256"
+                ]
+            },
+            {
+                "id": "KittyBase -> _transfer",
+                "name": "KittyBase:_transfer:address:address:uint256",
+                "size": 3938,
+                "imports": []
+            },
+            {
+                "id": "KittyBase -> _createKitty",
+                "name": "KittyBase:_createKitty:uint256:uint256:uint256:uint256:address",
+                "size": 3938,
+                "imports": [
+                    "KittyBase:_transfer:address:address:uint256"
+                ]
+            },
+            {
+                "id": "ERC721Metadata -> getMetadata",
+                "name": "ERC721Metadata:getMetadata:uint256:string",
+                "size": 3938,
+                "imports": []
+            },
+            {
+                "id": "KittyOwnership -> _owns",
+                "name": "KittyOwnership:_owns:address:uint256",
+                "size": 3938,
+                "imports": []
+            },
+            {
+                "id": "KittyOwnership -> _approvedFor",
+                "name": "KittyOwnership:_approvedFor:address:uint256",
+                "size": 3938,
+                "imports": []
+            },
+            {
+                "id": "KittyOwnership -> _approve",
+                "name": "KittyOwnership:_approve:uint256:address",
+                "size": 3938,
+                "imports": []
+            },
+            {
+                "id": "KittyOwnership -> balanceOf",
+                "name": "KittyOwnership:balanceOf:address",
+                "size": 3938,
+                "imports": []
+            },
+            {
+                "id": "KittyOwnership -> transfer",
+                "name": "KittyOwnership:transfer:address:uint256",
+                "size": 3938,
+                "imports": [
+                    "KittyOwnership:_owns:address:uint256",
+                    "KittyBase:_transfer:address:address:uint256"
+                ]
+            },
+            {
+                "id": "KittyOwnership -> approve",
+                "name": "KittyOwnership:approve:address:uint256",
+                "size": 3938,
+                "imports": [
+                    "KittyOwnership:_owns:address:uint256",
+                    "KittyOwnership:_approve:uint256:address"
+                ]
+            },
+            {
+                "id": "KittyOwnership -> transferFrom",
+                "name": "KittyOwnership:transferFrom:address:address:uint256",
+                "size": 3938,
+                "imports": [
+                    "KittyOwnership:_approvedFor:address:uint256",
+                    "KittyOwnership:_owns:address:uint256",
+                    "KittyBase:_transfer:address:address:uint256"
+                ]
+            },
+            {
+                "id": "KittyOwnership -> totalSupply",
+                "name": "KittyOwnership:totalSupply",
+                "size": 3938,
+                "imports": []
+            },
+            {
+                "id": "KittyOwnership -> tokensOfOwner",
+                "name": "KittyOwnership:tokensOfOwner:address",
+                "size": 3938,
+                "imports": [
+                    "KittyOwnership:balanceOf:address",
+                    "KittyOwnership:totalSupply"
+                ]
+            },
+            {
+                "id": "KittyOwnership -> _toString",
+                "name": "KittyOwnership:_toString:undefined:uint256",
+                "size": 3938,
+                "imports": []
+            },
+            {
+                "id": "KittyOwnership -> tokenMetadata",
+                "name": "KittyOwnership:tokenMetadata:uint256:string",
+                "size": 3938,
+                "imports": [
+                    "ERC721Metadata:getMetadata:uint256:string",
+                    "KittyOwnership:_toString:undefined:uint256"
+                ]
+            },
+            {
+                "id": "GeneScienceInterface -> isGeneScience",
+                "name": "GeneScienceInterface:isGeneScience",
+                "size": 3938,
+                "imports": []
+            },
+            {
+                "id": "GeneScienceInterface -> mixGenes",
+                "name": "GeneScienceInterface:mixGenes:uint256:uint256:uint256",
+                "size": 3938,
+                "imports": []
+            },
+            {
+                "id": "KittyBreeding -> setGeneScienceAddress",
+                "name": "KittyBreeding:setGeneScienceAddress:address",
+                "size": 3938,
+                "imports": [
+                    "GeneScienceInterface:isGeneScience"
+                ]
+            },
+            {
+                "id": "KittyBreeding -> _isReadyToBreed",
+                "name": "KittyBreeding:_isReadyToBreed:Kitty",
+                "size": 3938,
+                "imports": []
+            },
+            {
+                "id": "KittyBreeding -> _isSiringPermitted",
+                "name": "KittyBreeding:_isSiringPermitted:uint256:uint256",
+                "size": 3938,
+                "imports": []
+            },
+            {
+                "id": "KittyBreeding -> _triggerCooldown",
+                "name": "KittyBreeding:_triggerCooldown:Kitty",
+                "size": 3938,
+                "imports": []
+            },
+            {
+                "id": "KittyBreeding -> approveSiring",
+                "name": "KittyBreeding:approveSiring:address:uint256",
+                "size": 3938,
+                "imports": [
+                    "KittyOwnership:_owns:address:uint256"
+                ]
+            },
+            {
+                "id": "KittyBreeding -> _isReadyToGiveBirth",
+                "name": "KittyBreeding:_isReadyToGiveBirth:Kitty",
+                "size": 3938,
+                "imports": []
+            },
+            {
+                "id": "KittyBreeding -> isReadyToBreed",
+                "name": "KittyBreeding:isReadyToBreed:uint256",
+                "size": 3938,
+                "imports": [
+                    "KittyBreeding:_isReadyToBreed:Kitty"
+                ]
+            },
+            {
+                "id": "KittyBreeding -> _isValidMatingPair",
+                "name": "KittyBreeding:_isValidMatingPair:Kitty:uint256:Kitty:uint256",
+                "size": 3938,
+                "imports": []
+            },
+            {
+                "id": "KittyBreeding -> _canBreedWithViaAuction",
+                "name": "KittyBreeding:_canBreedWithViaAuction:uint256:uint256",
+                "size": 3938,
+                "imports": [
+                    "KittyBreeding:_isValidMatingPair:Kitty:uint256:Kitty:uint256"
+                ]
+            },
+            {
+                "id": "KittyBreeding -> canBreedWith",
+                "name": "KittyBreeding:canBreedWith:uint256:uint256",
+                "size": 3938,
+                "imports": [
+                    "KittyBreeding:_isValidMatingPair:Kitty:uint256:Kitty:uint256",
+                    "KittyBreeding:_isSiringPermitted:uint256:uint256"
+                ]
+            },
+            {
+                "id": "KittyBreeding -> _breedWith",
+                "name": "KittyBreeding:_breedWith:uint256:uint256",
+                "size": 3938,
+                "imports": [
+                    "KittyBreeding:_triggerCooldown:Kitty",
+                    "KittyBreeding:_triggerCooldown:Kitty"
+                ]
+            },
+            {
+                "id": "KittyBreeding -> breedWithAuto",
+                "name": "KittyBreeding:breedWithAuto:uint256:uint256",
+                "size": 3938,
+                "imports": [
+                    "KittyOwnership:_owns:address:uint256",
+                    "KittyBreeding:_isSiringPermitted:uint256:uint256",
+                    "KittyBreeding:_isReadyToBreed:Kitty",
+                    "KittyBreeding:_isReadyToBreed:Kitty",
+                    "KittyBreeding:_isValidMatingPair:Kitty:uint256:Kitty:uint256",
+                    "KittyBreeding:_breedWith:uint256:uint256"
+                ]
+            },
+            {
+                "id": "KittyBreeding -> giveBirth",
+                "name": "KittyBreeding:giveBirth:uint256",
+                "size": 3938,
+                "imports": [
+                    "KittyBreeding:_isReadyToGiveBirth:Kitty",
+                    "GeneScienceInterface:mixGenes:uint256:uint256:uint256",
+                    "KittyBase:_createKitty:uint256:uint256:uint256:uint256:address"
+                ]
+            }
+        ],
+        "neural": {
+            "nodes": [
+                {
+                    "id": "ClockAuctionBase:_owns:address:uint256",
+                    "method": "_owns",
+                    "contract": "ClockAuctionBase"
+                },
+                {
+                    "id": "ClockAuctionBase:_escrow:address:uint256",
+                    "method": "_escrow",
+                    "contract": "ClockAuctionBase"
+                },
+                {
+                    "id": "ClockAuctionBase:_transfer:address:uint256",
+                    "method": "_transfer",
+                    "contract": "ClockAuctionBase"
+                },
+                {
+                    "id": "ClockAuctionBase:_addAuction:uint256:Auction",
+                    "method": "_addAuction",
+                    "contract": "ClockAuctionBase"
+                },
+                {
+                    "id": "ClockAuctionBase:_cancelAuction:uint256:address",
+                    "method": "_cancelAuction",
+                    "contract": "ClockAuctionBase"
+                },
+                {
+                    "id": "ClockAuctionBase:_bid:uint256:uint256",
+                    "method": "_bid",
+                    "contract": "ClockAuctionBase"
+                },
+                {
+                    "id": "ClockAuctionBase:_removeAuction:uint256",
+                    "method": "_removeAuction",
+                    "contract": "ClockAuctionBase"
+                },
+                {
+                    "id": "ClockAuctionBase:_isOnAuction:Auction",
+                    "method": "_isOnAuction",
+                    "contract": "ClockAuctionBase"
+                },
+                {
+                    "id": "ClockAuctionBase:_currentPrice:Auction",
+                    "method": "_currentPrice",
+                    "contract": "ClockAuctionBase"
+                },
+                {
+                    "id": "ClockAuctionBase:_computeCurrentPrice:uint256:uint256:uint256:uint256",
+                    "method": "_computeCurrentPrice",
+                    "contract": "ClockAuctionBase"
+                },
+                {
+                    "id": "ClockAuctionBase:_computeCut:uint256",
+                    "method": "_computeCut",
+                    "contract": "ClockAuctionBase"
+                },
+                {
+                    "id": "ClockAuction:createAuction:uint256:uint256:uint256:uint256:address",
+                    "method": "createAuction",
+                    "contract": "ClockAuction"
+                },
+                {
+                    "id": "ClockAuction:bid:uint256",
+                    "method": "bid",
+                    "contract": "ClockAuction"
+                },
+                {
+                    "id": "ClockAuction:cancelAuction:uint256",
+                    "method": "cancelAuction",
+                    "contract": "ClockAuction"
+                },
+                {
+                    "id": "ClockAuction:cancelAuctionWhenPaused:uint256",
+                    "method": "cancelAuctionWhenPaused",
+                    "contract": "ClockAuction"
+                },
+                {
+                    "id": "ClockAuction:getAuction:uint256",
+                    "method": "getAuction",
+                    "contract": "ClockAuction"
+                },
+                {
+                    "id": "ClockAuction:getCurrentPrice:uint256",
+                    "method": "getCurrentPrice",
+                    "contract": "ClockAuction"
+                },
+                {
+                    "id": "SaleClockAuction:createAuction:uint256:uint256:uint256:uint256:address",
+                    "method": "createAuction",
+                    "contract": "SaleClockAuction"
+                },
+                {
+                    "id": "SaleClockAuction:bid:uint256",
+                    "method": "bid",
+                    "contract": "SaleClockAuction"
+                },
+                {
+                    "id": "SiringClockAuction:createAuction:uint256:uint256:uint256:uint256:address",
+                    "method": "createAuction",
+                    "contract": "SiringClockAuction"
+                },
+                {
+                    "id": "SiringClockAuction:bid:uint256",
+                    "method": "bid",
+                    "contract": "SiringClockAuction"
+                },
+                {
+                    "id": "KittyBase:_transfer:address:address:uint256",
+                    "method": "_transfer",
+                    "contract": "KittyBase"
+                },
+                {
+                    "id": "KittyBase:_createKitty:uint256:uint256:uint256:uint256:address",
+                    "method": "_createKitty",
+                    "contract": "KittyBase"
+                },
+                {
+                    "id": "ERC721Metadata:getMetadata:uint256:string",
+                    "method": "getMetadata",
+                    "contract": "ERC721Metadata"
+                },
+                {
+                    "id": "KittyOwnership:_owns:address:uint256",
+                    "method": "_owns",
+                    "contract": "KittyOwnership"
+                },
+                {
+                    "id": "KittyOwnership:_approvedFor:address:uint256",
+                    "method": "_approvedFor",
+                    "contract": "KittyOwnership"
+                },
+                {
+                    "id": "KittyOwnership:_approve:uint256:address",
+                    "method": "_approve",
+                    "contract": "KittyOwnership"
+                },
+                {
+                    "id": "KittyOwnership:balanceOf:address",
+                    "method": "balanceOf",
+                    "contract": "KittyOwnership"
+                },
+                {
+                    "id": "KittyOwnership:transfer:address:uint256",
+                    "method": "transfer",
+                    "contract": "KittyOwnership"
+                },
+                {
+                    "id": "KittyOwnership:approve:address:uint256",
+                    "method": "approve",
+                    "contract": "KittyOwnership"
+                },
+                {
+                    "id": "KittyOwnership:transferFrom:address:address:uint256",
+                    "method": "transferFrom",
+                    "contract": "KittyOwnership"
+                },
+                {
+                    "id": "KittyOwnership:totalSupply",
+                    "method": "totalSupply",
+                    "contract": "KittyOwnership"
+                },
+                {
+                    "id": "KittyOwnership:tokensOfOwner:address",
+                    "method": "tokensOfOwner",
+                    "contract": "KittyOwnership"
+                },
+                {
+                    "id": "KittyOwnership:_toString:undefined:uint256",
+                    "method": "_toString",
+                    "contract": "KittyOwnership"
+                },
+                {
+                    "id": "KittyOwnership:tokenMetadata:uint256:string",
+                    "method": "tokenMetadata",
+                    "contract": "KittyOwnership"
+                },
+                {
+                    "id": "GeneScienceInterface:isGeneScience",
+                    "method": "isGeneScience",
+                    "contract": "GeneScienceInterface"
+                },
+                {
+                    "id": "GeneScienceInterface:mixGenes:uint256:uint256:uint256",
+                    "method": "mixGenes",
+                    "contract": "GeneScienceInterface"
+                },
+                {
+                    "id": "KittyBreeding:setGeneScienceAddress:address",
+                    "method": "setGeneScienceAddress",
+                    "contract": "KittyBreeding"
+                },
+                {
+                    "id": "KittyBreeding:_isReadyToBreed:Kitty",
+                    "method": "_isReadyToBreed",
+                    "contract": "KittyBreeding"
+                },
+                {
+                    "id": "KittyBreeding:_isSiringPermitted:uint256:uint256",
+                    "method": "_isSiringPermitted",
+                    "contract": "KittyBreeding"
+                },
+                {
+                    "id": "KittyBreeding:_triggerCooldown:Kitty",
+                    "method": "_triggerCooldown",
+                    "contract": "KittyBreeding"
+                },
+                {
+                    "id": "KittyBreeding:approveSiring:address:uint256",
+                    "method": "approveSiring",
+                    "contract": "KittyBreeding"
+                },
+                {
+                    "id": "KittyBreeding:_isReadyToGiveBirth:Kitty",
+                    "method": "_isReadyToGiveBirth",
+                    "contract": "KittyBreeding"
+                },
+                {
+                    "id": "KittyBreeding:isReadyToBreed:uint256",
+                    "method": "isReadyToBreed",
+                    "contract": "KittyBreeding"
+                },
+                {
+                    "id": "KittyBreeding:_isValidMatingPair:Kitty:uint256:Kitty:uint256",
+                    "method": "_isValidMatingPair",
+                    "contract": "KittyBreeding"
+                },
+                {
+                    "id": "KittyBreeding:_canBreedWithViaAuction:uint256:uint256",
+                    "method": "_canBreedWithViaAuction",
+                    "contract": "KittyBreeding"
+                },
+                {
+                    "id": "KittyBreeding:canBreedWith:uint256:uint256",
+                    "method": "canBreedWith",
+                    "contract": "KittyBreeding"
+                },
+                {
+                    "id": "KittyBreeding:_breedWith:uint256:uint256",
+                    "method": "_breedWith",
+                    "contract": "KittyBreeding"
+                },
+                {
+                    "id": "KittyBreeding:breedWithAuto:uint256:uint256",
+                    "method": "breedWithAuto",
+                    "contract": "KittyBreeding"
+                },
+                {
+                    "id": "KittyBreeding:giveBirth:uint256",
+                    "method": "giveBirth",
+                    "contract": "KittyBreeding"
+                }
+            ],
+            "links": [
+                {
+                    "source": "ClockAuctionBase:_cancelAuction:uint256:address",
+                    "target": "ClockAuctionBase:_removeAuction:uint256",
+                    "value": 1
+                },
+                {
+                    "source": "ClockAuctionBase:_cancelAuction:uint256:address",
+                    "target": "ClockAuctionBase:_transfer:address:uint256",
+                    "value": 1
+                },
+                {
+                    "source": "ClockAuctionBase:_bid:uint256:uint256",
+                    "target": "ClockAuctionBase:_isOnAuction:Auction",
+                    "value": 1
+                },
+                {
+                    "source": "ClockAuctionBase:_bid:uint256:uint256",
+                    "target": "ClockAuctionBase:_currentPrice:Auction",
+                    "value": 1
+                },
+                {
+                    "source": "ClockAuctionBase:_bid:uint256:uint256",
+                    "target": "ClockAuctionBase:_removeAuction:uint256",
+                    "value": 1
+                },
+                {
+                    "source": "ClockAuctionBase:_bid:uint256:uint256",
+                    "target": "ClockAuctionBase:_computeCut:uint256",
+                    "value": 1
+                },
+                {
+                    "source": "ClockAuctionBase:_currentPrice:Auction",
+                    "target": "ClockAuctionBase:_computeCurrentPrice:uint256:uint256:uint256:uint256",
+                    "value": 1
+                },
+                {
+                    "source": "ClockAuction:createAuction:uint256:uint256:uint256:uint256:address",
+                    "target": "ClockAuctionBase:_owns:address:uint256",
+                    "value": 1
+                },
+                {
+                    "source": "ClockAuction:createAuction:uint256:uint256:uint256:uint256:address",
+                    "target": "ClockAuctionBase:_escrow:address:uint256",
+                    "value": 1
+                },
+                {
+                    "source": "ClockAuction:createAuction:uint256:uint256:uint256:uint256:address",
+                    "target": "ClockAuctionBase:_addAuction:uint256:Auction",
+                    "value": 1
+                },
+                {
+                    "source": "ClockAuction:bid:uint256",
+                    "target": "ClockAuctionBase:_bid:uint256:uint256",
+                    "value": 1
+                },
+                {
+                    "source": "ClockAuction:bid:uint256",
+                    "target": "ClockAuctionBase:_transfer:address:uint256",
+                    "value": 1
+                },
+                {
+                    "source": "ClockAuction:cancelAuction:uint256",
+                    "target": "ClockAuctionBase:_isOnAuction:Auction",
+                    "value": 1
+                },
+                {
+                    "source": "ClockAuction:cancelAuction:uint256",
+                    "target": "ClockAuctionBase:_cancelAuction:uint256:address",
+                    "value": 1
+                },
+                {
+                    "source": "ClockAuction:cancelAuctionWhenPaused:uint256",
+                    "target": "ClockAuctionBase:_isOnAuction:Auction",
+                    "value": 1
+                },
+                {
+                    "source": "ClockAuction:cancelAuctionWhenPaused:uint256",
+                    "target": "ClockAuctionBase:_cancelAuction:uint256:address",
+                    "value": 1
+                },
+                {
+                    "source": "ClockAuction:getAuction:uint256",
+                    "target": "ClockAuctionBase:_isOnAuction:Auction",
+                    "value": 1
+                },
+                {
+                    "source": "ClockAuction:getCurrentPrice:uint256",
+                    "target": "ClockAuctionBase:_isOnAuction:Auction",
+                    "value": 1
+                },
+                {
+                    "source": "ClockAuction:getCurrentPrice:uint256",
+                    "target": "ClockAuctionBase:_currentPrice:Auction",
+                    "value": 1
+                },
+                {
+                    "source": "SaleClockAuction:createAuction:uint256:uint256:uint256:uint256:address",
+                    "target": "ClockAuctionBase:_escrow:address:uint256",
+                    "value": 1
+                },
+                {
+                    "source": "SaleClockAuction:createAuction:uint256:uint256:uint256:uint256:address",
+                    "target": "ClockAuctionBase:_addAuction:uint256:Auction",
+                    "value": 1
+                },
+                {
+                    "source": "SaleClockAuction:bid:uint256",
+                    "target": "ClockAuctionBase:_bid:uint256:uint256",
+                    "value": 1
+                },
+                {
+                    "source": "SaleClockAuction:bid:uint256",
+                    "target": "ClockAuctionBase:_transfer:address:uint256",
+                    "value": 1
+                },
+                {
+                    "source": "SiringClockAuction:createAuction:uint256:uint256:uint256:uint256:address",
+                    "target": "ClockAuctionBase:_escrow:address:uint256",
+                    "value": 1
+                },
+                {
+                    "source": "SiringClockAuction:createAuction:uint256:uint256:uint256:uint256:address",
+                    "target": "ClockAuctionBase:_addAuction:uint256:Auction",
+                    "value": 1
+                },
+                {
+                    "source": "SiringClockAuction:bid:uint256",
+                    "target": "ClockAuctionBase:_bid:uint256:uint256",
+                    "value": 1
+                },
+                {
+                    "source": "SiringClockAuction:bid:uint256",
+                    "target": "ClockAuctionBase:_transfer:address:uint256",
+                    "value": 1
+                },
+                {
+                    "source": "KittyBase:_createKitty:uint256:uint256:uint256:uint256:address",
+                    "target": "KittyBase:_transfer:address:address:uint256",
+                    "value": 1
+                },
+                {
+                    "source": "KittyOwnership:transfer:address:uint256",
+                    "target": "KittyOwnership:_owns:address:uint256",
+                    "value": 1
+                },
+                {
+                    "source": "KittyOwnership:transfer:address:uint256",
+                    "target": "KittyBase:_transfer:address:address:uint256",
+                    "value": 1
+                },
+                {
+                    "source": "KittyOwnership:approve:address:uint256",
+                    "target": "KittyOwnership:_owns:address:uint256",
+                    "value": 1
+                },
+                {
+                    "source": "KittyOwnership:approve:address:uint256",
+                    "target": "KittyOwnership:_approve:uint256:address",
+                    "value": 1
+                },
+                {
+                    "source": "KittyOwnership:transferFrom:address:address:uint256",
+                    "target": "KittyOwnership:_approvedFor:address:uint256",
+                    "value": 1
+                },
+                {
+                    "source": "KittyOwnership:transferFrom:address:address:uint256",
+                    "target": "KittyOwnership:_owns:address:uint256",
+                    "value": 1
+                },
+                {
+                    "source": "KittyOwnership:transferFrom:address:address:uint256",
+                    "target": "KittyBase:_transfer:address:address:uint256",
+                    "value": 1
+                },
+                {
+                    "source": "KittyOwnership:tokensOfOwner:address",
+                    "target": "KittyOwnership:balanceOf:address",
+                    "value": 1
+                },
+                {
+                    "source": "KittyOwnership:tokensOfOwner:address",
+                    "target": "KittyOwnership:totalSupply",
+                    "value": 1
+                },
+                {
+                    "source": "KittyOwnership:tokenMetadata:uint256:string",
+                    "target": "ERC721Metadata:getMetadata:uint256:string",
+                    "value": 1
+                },
+                {
+                    "source": "KittyOwnership:tokenMetadata:uint256:string",
+                    "target": "KittyOwnership:_toString:undefined:uint256",
+                    "value": 1
+                },
+                {
+                    "source": "KittyBreeding:setGeneScienceAddress:address",
+                    "target": "GeneScienceInterface:isGeneScience",
+                    "value": 1
+                },
+                {
+                    "source": "KittyBreeding:approveSiring:address:uint256",
+                    "target": "KittyOwnership:_owns:address:uint256",
+                    "value": 1
+                },
+                {
+                    "source": "KittyBreeding:isReadyToBreed:uint256",
+                    "target": "KittyBreeding:_isReadyToBreed:Kitty",
+                    "value": 1
+                },
+                {
+                    "source": "KittyBreeding:_canBreedWithViaAuction:uint256:uint256",
+                    "target": "KittyBreeding:_isValidMatingPair:Kitty:uint256:Kitty:uint256",
+                    "value": 1
+                },
+                {
+                    "source": "KittyBreeding:canBreedWith:uint256:uint256",
+                    "target": "KittyBreeding:_isValidMatingPair:Kitty:uint256:Kitty:uint256",
+                    "value": 1
+                },
+                {
+                    "source": "KittyBreeding:canBreedWith:uint256:uint256",
+                    "target": "KittyBreeding:_isSiringPermitted:uint256:uint256",
+                    "value": 1
+                },
+                {
+                    "source": "KittyBreeding:_breedWith:uint256:uint256",
+                    "target": "KittyBreeding:_triggerCooldown:Kitty",
+                    "value": 1
+                },
+                {
+                    "source": "KittyBreeding:_breedWith:uint256:uint256",
+                    "target": "KittyBreeding:_triggerCooldown:Kitty",
+                    "value": 1
+                },
+                {
+                    "source": "KittyBreeding:breedWithAuto:uint256:uint256",
+                    "target": "KittyOwnership:_owns:address:uint256",
+                    "value": 1
+                },
+                {
+                    "source": "KittyBreeding:breedWithAuto:uint256:uint256",
+                    "target": "KittyBreeding:_isSiringPermitted:uint256:uint256",
+                    "value": 1
+                },
+                {
+                    "source": "KittyBreeding:breedWithAuto:uint256:uint256",
+                    "target": "KittyBreeding:_isReadyToBreed:Kitty",
+                    "value": 1
+                },
+                {
+                    "source": "KittyBreeding:breedWithAuto:uint256:uint256",
+                    "target": "KittyBreeding:_isReadyToBreed:Kitty",
+                    "value": 1
+                },
+                {
+                    "source": "KittyBreeding:breedWithAuto:uint256:uint256",
+                    "target": "KittyBreeding:_isValidMatingPair:Kitty:uint256:Kitty:uint256",
+                    "value": 1
+                },
+                {
+                    "source": "KittyBreeding:breedWithAuto:uint256:uint256",
+                    "target": "KittyBreeding:_breedWith:uint256:uint256",
+                    "value": 1
+                },
+                {
+                    "source": "KittyBreeding:giveBirth:uint256",
+                    "target": "KittyBreeding:_isReadyToGiveBirth:Kitty",
+                    "value": 1
+                },
+                {
+                    "source": "KittyBreeding:giveBirth:uint256",
+                    "target": "GeneScienceInterface:mixGenes:uint256:uint256:uint256",
+                    "value": 1
+                },
+                {
+                    "source": "KittyBreeding:giveBirth:uint256",
+                    "target": "KittyBase:_createKitty:uint256:uint256:uint256:uint256:address",
+                    "value": 1
+                }
+            ]
+        }
+    }
+]
