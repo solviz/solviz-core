@@ -6,14 +6,14 @@ const { generateVisualization } = require('../src/index');
 
 const helpMessage = `
 Usage
-    $ solvis <file(s)>
+    $ solviz <file(s)>
 
 Options
     --help, -h  To get help
 
 Examples
-    $ solvis contracts/Sample.sol
-    $ solvis contracts/
+    $ solviz contracts/Sample.sol
+    $ solviz contracts/
 `;
 const cli = meow(helpMessage);
 
