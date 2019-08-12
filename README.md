@@ -12,6 +12,7 @@
 * Really fast :rabbit2:
 
 ## Limitations
+Please, read our [wiki](https://github.com/obernardovieira/solviz/wiki) to better understand the story and the algorithm.
 As it is still under development
 * variables like: 0 and "some" directly in method
 * assembly
