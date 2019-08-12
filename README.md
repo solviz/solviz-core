@@ -1,6 +1,7 @@
 <div style="text-align:center">
     <h1>solviz</h1>
     <p>A visualization tool that makes Blockchain developers lives easier.</p>
+    <p>Please, read our <a href="https://github.com/obernardovieira/solviz/wiki">wiki</a> to better understand the story and the algorithm.</p>
 </div>
 <p align="center">
     <img width="80%" src="preview.png">
@@ -12,7 +13,6 @@
 * Really fast :rabbit2:
 
 ## Limitations
-Please, read our [wiki](https://github.com/obernardovieira/solviz/wiki) to better understand the story and the algorithm.
 As it is still under development
 * variables like: 0 and "some" directly in method
 * assembly
