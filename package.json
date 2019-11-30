@@ -5,8 +5,7 @@
     "main": "./src/parsing.js",
     "scripts": {
         "test": "mocha",
-        "lint": "eslint src/*.js src/graphics/*.js",
-        "demo": "./bin/cli.js test/contracts/cryptokitties/KittyCore.sol"
+        "lint": "eslint src/*.js src/graphics/*.js"
     },
     "repository": {
         "type": "git",
